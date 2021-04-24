@@ -12,7 +12,9 @@ class BankidController extends Controller
     {
         return view('LaravelBankid::bankidindex');
     }
-    public function bankidLogin() {
+
+    public function bankidLogin()
+    {
         return view('bankidlogin');
     }
 }

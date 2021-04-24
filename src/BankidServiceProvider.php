@@ -7,6 +7,8 @@ use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Patrikgrinsvall\LaravelBankid\Commands\BankidCommand;
 use Patrikgrinsvall\LaravelBankid\Http\Controllers\BankidController;
 use Illuminate\Support\Facades\Route;
+use Livewire\Component;
+use Livewire\Livewire;
 
 class BankidServiceProvider extends PackageServiceProvider
 {
@@ -29,11 +31,19 @@ class BankidServiceProvider extends PackageServiceProvider
 
     public function boot()
     {
-        $this->loadViewsFrom(__DIR__ . '/../resources/views/', 'LaravelBankid');
-
+        /*
         $this->publishes([
-            __DIR__ . "/../assets/images" => base_path('storage/vendor/images/laravel-bankid')
-        ],['bankid-assets']);
+            $this->package->basePath('/../Components') => base_path("app/View/Components/vendor/{$this->package->shortName()}"),
+        ], "{$this->package->name}-components");
+        */
+
+        $this->loadViewsFrom(__DIR__ . '/../resources/views/', 'LaravelBankid');
+        if (!$this->app->runningInConsole()) {
+            Livewire::component('bankidcomponent', Http\Livewire\BankidComponent::class);
+        }
+        $this->publishes([
+            __DIR__ . "/../assets/images" => public_path('vendor/laravel-bankid')
+        ], 'bankid-assets');
 
         Route::macro('LaravelBankid', function(string $prefix)
         {

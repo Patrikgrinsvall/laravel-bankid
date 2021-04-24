@@ -1,0 +1,38 @@
+{
+    "Start your BankID app."                : "Starta BankID-appen",
+    "The BankID app is not installed. Please contact your internet bank." :
+        "Du har inte BankID-appen installerad. Kontakta din internetbank.",
+    "Action cancelled. Please try again"    : "Åtgärden avbruten. Försök igen.",
+    "An identification or signing for this personal number is already started. Please try again." :
+        "En identifiering eller underskrift för det här personnumret är redan påbörjad. Försök igen.",
+    "Internal error. Please try again. "    : "Internt tekniskt fel. Försök igen.",
+    "Action cancelled."                     : "Åtgärden avbruten.",
+    "The BankID app is not responding. Please check that the program is started and that you have internet access. If you don’t have a valid BankID you can get one from your bank. Try again" :
+        "BankID-appen svarar inte. Kontrollera att den är startad och att du har internetanslutning. Om du inte har något giltigt BankID kan du hämta ett hos din Bank. Försök sedan igen.",
+    "Enter your security code in the BankID app and select Identify or Sign."
+        : "Skriv in din säkerhetskod i BankIDappen och välj Legitimera eller Skriv under.",
+    "Trying to start your BankID app."      : "Försöker starta BankID-appen.",
+    "Unknown error. Please try again" : "Okänt fel. Försök igen. ",
+    "INVALID_PARAMETERS"                    : "INVALID_PARAMETERS",
+    "ALREADY_IN_PROGRESS"                   : "ALREADY_IN_PROGRESS",
+    "INTERNAL_ERROR"                        : "INTERNAL_ERROR",
+    "OUTSTANDING_TRANSACTION"               : "OUTSTANDING_TRANSACTION",
+    "NO_CLIENT"                             : "NO_CLIENT",
+    "STARTED"                               : "STARTED",
+    "USER_SIGN"                             : "USER_SIGN",
+    "COMPLETE"                              : "COMPLETE",
+    "USER_CANCEL"                           : "USER_CANCEL",
+    "CANCEL"                                : "CANCELLED",
+    "EXPIRED_TRANSACTION"                   : "EXPIRED_TRANSACTION",
+    "MESSAGE_INVALID_PARAMETERS"            : "Felakti",
+    "MESSAGE_ALREADY_IN_PROGRESS"           : "ALREADY_IN_PROGRESS",
+    "MESSAGE_INTERNAL_ERROR"                : "INTERNAL_ERROR",
+    "MESSAGE_OUTSTANDING_TRANSACTION"       : "OUTSTANDING_TRANSACTION",
+    "MESSAGE_NO_CLIENT"                     : "NO_CLIENT",
+    "MESSAGE_STARTED"                       : "STARTED",
+    "MESSAGE_USER_SIGN"                     : "USER_SIGN",
+    "MESSAGE_COMPLETE"                      : "COMPLETE",
+    "MESSAGE_USER_CANCEL"                   : "USER_CANCEL",
+    "MESSAGE_CANCEL"                        : "CANCELLED",
+    "MESSAGE_EXPIRED_TRANSACTION"           : "EXPIRED_TRANSACTION"
+}
