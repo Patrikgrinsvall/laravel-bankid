@@ -2,13 +2,13 @@
 
 namespace Patrikgrinsvall\LaravelBankid;
 
-use Spatie\LaravelPackageTools\Package;
-use Spatie\LaravelPackageTools\PackageServiceProvider;
+use Illuminate\Support\Facades\Route;
 use Patrikgrinsvall\LaravelBankid\Commands\BankidCommand;
 use Patrikgrinsvall\LaravelBankid\Http\Controllers\BankidController;
-use Illuminate\Support\Facades\Route;
 use Livewire\Component;
 use Livewire\Livewire;
+use Spatie\LaravelPackageTools\Package;
+use Spatie\LaravelPackageTools\PackageServiceProvider;
 
 class BankidServiceProvider extends PackageServiceProvider
 {
@@ -26,7 +26,6 @@ class BankidServiceProvider extends PackageServiceProvider
             ->hasMigration('create_laravel_bankid_table')
             ->hasAssets(true)
             ->hasCommand(BankidCommand::class);
-
     }
 
     public function boot()
@@ -45,13 +44,10 @@ class BankidServiceProvider extends PackageServiceProvider
             __DIR__ . "/../assets/images" => public_path('vendor/laravel-bankid')
         ], 'bankid-assets');
 
-        Route::macro('LaravelBankid', function(string $prefix)
-        {
-            Route::prefix($prefix)->group(function()
-            {
+        Route::macro('LaravelBankid', function (string $prefix) {
+            Route::prefix($prefix)->group(function () {
                 Route::get('/', [BankidController::class, 'index']);
             });
         });
-
     }
 }
