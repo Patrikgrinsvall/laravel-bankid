@@ -9,6 +9,10 @@ class BankidComponent extends Component
 {
     private $bankid;
 
+    protected $rules = [
+        'personalNumber' => 'required|min:12'
+    ];
+
     public function __construct($id = null)
     {
         $this->bankid = new Bankid();
@@ -25,7 +29,8 @@ class BankidComponent extends Component
 
     public function authenticate()
     {
-        $this->bankid->authenticate();
+        $result = $this->bankid->authenticate(null);
+        $this->message = $result['message'];
     }
 
     public function render()

@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
+
 class Bankid
 {
     const BANKID_CODES = [
@@ -22,8 +23,6 @@ class Bankid
         "EXPIRED_TRANSACTION"       => "EXPIRED_TRANSACTION",
     ];
 
-
-
     const ERROR_RESPONSE_CODES      = [500, 501, 400, 401, 403];
     const SUCCESS_RESPONSE_CODES    = [200, 201];
 
@@ -39,13 +38,12 @@ class Bankid
             throw new \Exception('Environment variable SSL_KEY_PASSWORD missing. Bankid key file password not configured', 2);
         if(empty(config("bankid.CA_CERT")))
             throw new \Exception('Environment variable CA_CERT missing. CA cert not specified', 2);
-
     }
 
     /**
      * Collects a bankid response
      */
-    public function Collect(Request $request)
+    public function Collect(array $request)
     {
         $function = "/collect";
         $orderRef = $request['orderRef'];
@@ -121,19 +119,21 @@ class Bankid
      */
     public function Authenticate($personalNumber, $endUserIp = null)
     {
-        $validation = Validator::make($personalNumber, [
-            'personalNumber'    =>  'required|digits:12'
-        ]);
-
-        if($validation->fails()) {
-            return ['status' => 'invalid pnr or ip'];
-        }
-
         if (empty($endUserIp) && array_key_exists('HTTP_X_FORWARDED_FOR', $_SERVER))
             $endUserIp = $_SERVER["HTTP_X_FORWARDED_FOR"];
         else
             $endUserIp = $_SERVER['REMOTE_ADDR'];
 
+        $validation = Validator::make([
+            'pnr'=> $personalNumber,
+            'ip' => $endUserIp
+        ], [
+            'pnr'    =>     'required|digits:12',
+            'ip'     =>     'required|ip'
+        ], [
+            'need 12 digit',
+            'need ip'
+        ]);
 
         if(empty($endUserIp))
             throw new \Exception('Could not get end user ip which is required');
@@ -146,26 +146,24 @@ class Bankid
         $response = $this->bankIdRequest("/auth", $postdata);
         Log::debug("bankid response:" . print_r($response, 1));
         if(isset($response['status']) && $response['status'] =='error')
-            return response()->json([
+            return [
                 'status'    => 'error',
-                'message'   => 'Bankid returned an error. Maybe you tried to start twice or something else weird happend. Please try again.'],self::ERROR_RESPONSE_CODE);
+                'message'   => 'Bankid returned an error. Maybe you tried to start twice or something else weird happend. Please try again.'];
 
         if( isset($response['errorCode']) &&
             $response['errorCode'] == 'alreadyInProgress')
-                return response()->json([
+                return [
                     'status'    => 'error ',
                     'message'   => 'You had already started a login. Now its canceled. Please try again.'
-                ], self::ERROR_RESPONSE_CODES[0]);
+                ];
 
         if(!isset($response['orderRef']))
-            return response()->json([
+            return [
                 'status'    => 'error',
                 'message'   => 'Did not get orderref, check server logs'
-            ], self::ERROR_RESPONSE_CODES[0]);
+            ];
 
-        return response()->json([
-            'orderRef' => $response['orderRef']
-        ], 200);
+        return ['orderRef' => $response['orderRef']];
     }
 
     /**
@@ -232,21 +230,21 @@ class Bankid
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
         curl_setopt($ch, CURLINFO_HEADER_OUT, true);
         curl_setopt($ch, CURLOPT_HEADER, false);
-        curl_setopt($ch, CURLOPT_URL, $this->endpoint . $function);
+        curl_setopt($ch, CURLOPT_URL, config("bankid.ENDPOINT") . $function);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS , $postdata);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
-        curl_setopt($ch, CURLOPT_SSLCERT, base_path($this->ssl_cert));
-        curl_setopt($ch, CURLOPT_SSLKEY,  base_path($this->ssl_key));
-        curl_setopt($ch, CURLOPT_KEYPASSWD, $this->ssl_key_password);
-        curl_setopt($ch, CURLOPT_CAINFO, base_path($this->ca_cert));
+        curl_setopt($ch, CURLOPT_SSLCERT, base_path(config("bankid.SSL_CERT")));
+        curl_setopt($ch, CURLOPT_SSLKEY,  base_path(config("bankid.SSL_KEY")));
+        curl_setopt($ch, CURLOPT_KEYPASSWD, config("bankid.SSL_KEY_PASSWORD"));
+        curl_setopt($ch, CURLOPT_CAINFO, base_path(config("bankid.CA_CERT")));
         $response = curl_exec($ch);
         $info = curl_getinfo($ch);
         $error_msg = curl_error($ch);
-        Log::debug("->>". base_path($this->ssl_key).", -- ". $this->ssl_key_password." --".base_path($this->ssl_cert));
-        Log::debug("Request ({$this->endpoint}{$function}): ".$postdata. "bankid response:" . print_r($response,1) . print_r($info,1) . print_r($error_msg,1));
+        Log::debug("->>". base_path(config("bankid.SSL_CERT")).", -- ". config("bankid.SSL_KEY_PASSWORD")." --".base_path(config("bankid.SSL_KEY")));
+        Log::debug("Request (".config("bankid.ENDPOINT")."{$function}): ".$postdata. "bankid response:" . print_r($response,1) . print_r($info,1) . print_r($error_msg,1));
 
         if(strlen($error_msg) > 1) {
             throw new \Exception("Error when backend talking with bankid.." . print_r($error_msg,1));

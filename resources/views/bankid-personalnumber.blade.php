@@ -1,7 +1,7 @@
 <div class="container flex px-5 py-24 mx-auto">
     <div class="relative z-10 flex flex-col w-full p-8 mt-10 bg-white rounded-lg shadow-md border-1 lg:w-1/3 md:w-1/2 md:m-auto md:mt-0">
         <h2 class="mb-1 text-lg font-semibold text-gray-900 title-font">{{ $message }}</h2>
-        <form wire:submit.prevent="submit">
+
         <div class="relative flex items-stretch flex-grow mb-4 focus-within:z-10">
             <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
               <!-- Heroicon name: solid/users -->
@@ -9,13 +9,7 @@
                 <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
               </svg>
             </div>
-            @error('name') <span class="error">{{ $message }}</span> @enderror
-            <input
-                wire:model="name"
-                type = "text" name="personalNumber"
-                class="px-3 py-2 pl-10 border rounded shadow appearance-none text-grey-darker"
-                placeholder="198211124857"
-            />
+            <input type = "text" name="personalNumber" class="px-3 py-2 pl-10 border rounded shadow appearance-none text-grey-darker" placeholder="198211124857" />
         </div>
 
         <div class="pt-5">
@@ -24,11 +18,11 @@
                     Cancel
                 </button>
                 <button wire:click = "authenticate"
+                    type = "submit"
                     class = "inline-flex justify-center px-4 py-2 ml-3 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md shadow-sm hover:bg-green-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                     Login
                 </button>
             </div>
         </div>
-    </form>
     </div>
 </div>
