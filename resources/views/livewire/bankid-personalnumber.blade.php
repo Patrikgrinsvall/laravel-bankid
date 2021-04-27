@@ -11,10 +11,10 @@
             </div>
             @error('name') <span class="error">{{ $message }}</span> @enderror
             <input
-                wire:model="name"
+                wire:model="personalNumber"
                 type = "text" name="personalNumber"
                 class="px-3 py-2 pl-10 border rounded shadow appearance-none text-grey-darker"
-                placeholder="198211124857"
+                placeholder="{{ $personalNumber }}"
             />
         </div>
 

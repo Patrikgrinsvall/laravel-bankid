@@ -19,12 +19,13 @@
                     {{asset('vendor/laravel-bankid/logo_2103_full_960px.png')}}  960w,
                     {{asset('vendor/laravel-bankid/logo_2103_full_500px.png')}} 500w,
                     {{asset('vendor/laravel-bankid/logo_2103_full_260x50.png')}} 260w"
-                sizes = "(max-width: 300px) 250w,
-                    (max-width: 600px) 500w,
-                    (max-width: 1160px) 960w,
-                    (max-width: 1460px) 1366w,
+                sizes = "(max-width: 300px) 250px,
+                    (max-width: 600px) 500px,
+                    (max-width: 1160px) 960px,
+                    (max-width: 1460px) 1366px,
 260w
                 "
+                width="500px"
             >-->
 
 

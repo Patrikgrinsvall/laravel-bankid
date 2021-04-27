@@ -5,7 +5,7 @@ namespace Patrikgrinsvall\LaravelBankid;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-
+use Illuminate\Support\Arr;
 
 class Bankid
 {
@@ -40,80 +40,120 @@ class Bankid
             throw new \Exception('Environment variable CA_CERT missing. CA cert not specified', 2);
     }
 
+    private $orderRef = null;
+
+    function complete()
+    {
+        return redirect('/bankid/complete');
+    }
+    function cancel()
+    {
+        return redirect('/bankid/cancel');
+    }
+    function error()
+    {
+        return redirect('/bankid/complete');
+    }
+
     /**
      * Collects a bankid response
      */
     public function Collect(array $request)
     {
         $function = "/collect";
-        $orderRef = $request['orderRef'];
-        $type = $request['type'];
+        $type = isset($request['type']) ? $request['type'] : "auth";
+        $autoAllow = (isset($request['autoallow']) && $request['autoallow'] == true) ? true : false;
 
-        // @todo start laravel cookie session.
 
-        if($request['autoallow'] == true) {
-            $user = array(
-                'name' => 'Anders Andersson',
-                'status' => "complete",
-                'personalNumber' => "198211121234",
-                'givenName' => "Anders",
-                'surname' => "Andersson",
-                'notAfter' => "2025-01-01T00:00:00.000",
-                'orderRef'=> $request['orderRef'],
-                'type' => $request['type'],
-                'signature' => "<xml><testsignature/></xml>"
-            );
-/*
-            $transaction = new Transaction([
-                'user_personal_number' => $user['personalNumber'],
-                'deal_id' => null,
-                'type' => 'bankid_' . $user['type'],
-                'statement' => $request['orderRef']]
-            );
-            $transaction->save();
-            */
-            session($user);
-            return $user;
-        } else {
+//         if($autoAllow == true) {
+//             Log::error("autoallow");
+//             $user = array(
+//                 'name' => 'Anders Andersson',
+//                 'status' => "complete",
+//                 'personalNumber' => "198211121234",
+//                 'givenName' => "Anders",
+//                 'surname' => "Andersson",
+//                 'notAfter' => "2025-01-01T00:00:00.000",
+//                 'orderRef'=> $request['orderRef'],
+//                 'type' => $type,
+//                 'signature' => "<xml><testsignature/></xml>"
+//             );
+// /*
+//             $transaction = new Transaction([
+//                 'user_personal_number' => $user['personalNumber'],
+//                 'deal_id' => null,
+//                 'type' => 'bankid_' . $user['type'],
+//                 'statement' => $request['orderRef']]
+//             );
+//             $transaction->save();
+//             */
+//             session($user);
+//             return $user;
+//         } else {
             // real collect.
+            if($request['orderRef'] === null) return ['status' => 'error', 'message' => 'missing order'];
             $postdata = [
-                "orderRef" => $orderRef
+                "orderRef" => $request['orderRef']
               ];
             $response = $this->bankIdRequest("/collect", $postdata);
-            Log::debug("Bankid response: ".print_r($response,1));
-            $message = isset($response['hintCode']) ? $response['hintCode'] : "";
-            if($response['status'] == "complete") {
+            $response = [
+                'name' => isset($response['completionData']) ? $response['completionData']['user']['name'] : null,
+                'status' => $response['status'],
+                'personalNumber'    => isset($response['completionData']) ? $response['completionData']['user']['personalNumber'] : null,
+                'givenName'         => isset($response['completionData']) ? $response['completionData']['user']['givenName'] : null,
+                'surname'           => isset($response['completionData']) ? $response['completionData']['user']['surname'] : null,
+                'orderRef'          => $request['orderRef'],
+                'type'              => $type,
+                'signature'         => isset($response['completionData'])?$response['completionData']['signature']:null,
+            ];
 
-                $niceResponse = [
-                    'name' => $response['completionData']['user']['name'],
-                    'status' => $response['status'],
-                    'personalNumber' => $response['completionData']['user']['personalNumber'],
-                    'givenName' => $response['completionData']['user']['givenName'],
-                    'surname' => $response['completionData']['user']['surname'],
-                    'orderRef'=> $response['orderRef'],
-                    'type'    => $type,
-                    'signature' => isset($response['completionData']['user']['signature'])?$response['completionData']['user']['signature']:$response['completionData']['signature'],
-                ];
-                $niceResponse['loggedin'] = true;
-                session($niceResponse);
-/*
-                $transaction = new Transaction([
-                    'user_personal_number' => $response['completionData']['user']['personalNumber'],
-                    'deal_id' => null,
-                    'type' => 'bankid_' . $type,
-                    'statement' => $response['orderRef']]
-                );
-                $transaction->save();
-                */
-                return $niceResponse;
-            }
-            elseif($response['status'] == "pending")  return ['status' => "pending"];
-            else return response()->json(['status' => 'error', 'type' => $type, 'message' => $message], 500);
+            Log::error("Bankid response before collapse: ".print_r($response,1));
+            //$response = Arr::collapse($response);
+            //$response = $this->flatten([$response]);
+            Log::error("Bankid response: ".print_r($response,1));
 
-        }
+            session($response);
+
+
+
+
+
+
+            return $response;
+
+        //}
 
     }
+    public $flattened = [];
+    function flatten(array $array) {
 
+        if(is_array($array) && count($array) > 0)
+        {
+            foreach ($array as $member) {
+                if(!is_array($member))
+                {
+                    $this->flattened[] = $member;
+                } else
+                {
+                    $this->flatten($member);
+                }
+            }
+        }
+
+        return $this->flattened;
+    }
+
+    function saveTransaction(){
+    /*
+                    $transaction = new Transaction([
+                        'user_personal_number' => $response['completionData']['user']['personalNumber'],
+                        'deal_id' => null,
+                        'type' => 'bankid_' . $type,
+                        'statement' => $response['orderRef']]
+                    );
+                    $transaction->save();
+                    */
+    }
     /**
      * initiates an authentication
      */
@@ -145,25 +185,33 @@ class Bankid
 
         $response = $this->bankIdRequest("/auth", $postdata);
         Log::debug("bankid response:" . print_r($response, 1));
-        if(isset($response['status']) && $response['status'] =='error')
+        $this->orderRef = $response['orderRef'] ?? null;
+        if( isset( $response[ 'orderRef' ] ) )
+            return [
+                'status'    => 'collect',
+                'orderRef'  => $response[ 'orderRef' ],
+                'message'   => 'Complete authentication on your other device'
+            ];
+
+        if(isset($response[ 'status' ]) && $response[ 'status' ] =='error')
             return [
                 'status'    => 'error',
-                'message'   => 'Bankid returned an error. Maybe you tried to start twice or something else weird happend. Please try again.'];
+                'message'   => 'Bankid returned an error. Maybe you tried to start twice or something else weird happend. Please try again.'
+            ];
 
-        if( isset($response['errorCode']) &&
-            $response['errorCode'] == 'alreadyInProgress')
+        if( isset($response[ 'errorCode' ]) &&
+            $response[ 'errorCode' ] == 'alreadyInProgress')
                 return [
-                    'status'    => 'error ',
+                    'status'    => 'error',
                     'message'   => 'You had already started a login. Now its canceled. Please try again.'
                 ];
 
-        if(!isset($response['orderRef']))
-            return [
-                'status'    => 'error',
-                'message'   => 'Did not get orderref, check server logs'
-            ];
+        Log::debug("Something we did not account for happened: " . print_r($response, 1));
 
-        return ['orderRef' => $response['orderRef']];
+        return [
+            'status'    => 'error',
+            'message'   => 'Temporary error, please refresh page and try again.'
+        ];
     }
 
     /**
@@ -208,9 +256,9 @@ class Bankid
         ];
         $response = $this->bankIdRequest("/sign", $postdata); // 'Bankid returned an error. Maybe you tried to start twice or something else weird happend. Please try again.'
 
-        if(isset($response['errorCode']) && $response['errorCode'] =='alreadyInProgress') return response()->json(['status' => 'error ','message' => 'Login already started on with the same personal number. Try again..'], self::ERROR_RESPONSE_CODE);
-        if(isset($response['status']) && $response['status'] =='error') return response()->json(['status' => 'error ','message' => 'Bankid returned an unknown error. Maybe a connection error. Please try again.'], self::ERROR_RESPONSE_CODE);
-        if(!isset($response['orderRef'])) return response()->json(['status' => 'error','message' => 'Did not get orderref, check server logs'], self::ERROR_RESPONSE_CODE);
+        if(isset($response['errorCode']) && $response['errorCode'] =='alreadyInProgress') return response()->json(['status' => 'error ','message' => 'Login already started on with the same personal number. Try again..'], self::ERROR_RESPONSE_CODES[0]);
+        if(isset($response['status']) && $response['status'] =='error') return response()->json(['status' => 'error ','message' => 'Bankid returned an unknown error. Maybe a connection error. Please try again.'], self::ERROR_RESPONSE_CODES[0]);
+        if(!isset($response['orderRef'])) return response()->json(['status' => 'error','message' => 'Did not get orderref, check server logs'], self::ERROR_RESPONSE_CODES[0]);
         Log::debug("reposne" . $response['orderRef']);
         return [
             'orderRef' => $response['orderRef']
@@ -243,8 +291,8 @@ class Bankid
         $response = curl_exec($ch);
         $info = curl_getinfo($ch);
         $error_msg = curl_error($ch);
-        Log::debug("->>". base_path(config("bankid.SSL_CERT")).", -- ". config("bankid.SSL_KEY_PASSWORD")." --".base_path(config("bankid.SSL_KEY")));
-        Log::debug("Request (".config("bankid.ENDPOINT")."{$function}): ".$postdata. "bankid response:" . print_r($response,1) . print_r($info,1) . print_r($error_msg,1));
+        Log::error("->>". base_path(config("bankid.SSL_CERT")).", -- ". config("bankid.SSL_KEY_PASSWORD")." --".base_path(config("bankid.SSL_KEY")));
+        Log::error("Request (".config("bankid.ENDPOINT")."{$function}): ".$postdata. "bankid response:" . print_r($response,1) . print_r($info,1) . print_r($error_msg,1));
 
         if(strlen($error_msg) > 1) {
             throw new \Exception("Error when backend talking with bankid.." . print_r($error_msg,1));

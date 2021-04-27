@@ -9,6 +9,7 @@ use Livewire\Component;
 use Livewire\Livewire;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
+use Illuminate\Container\Container;
 
 class BankidServiceProvider extends PackageServiceProvider
 {
@@ -46,7 +47,15 @@ class BankidServiceProvider extends PackageServiceProvider
 
         Route::macro('LaravelBankid', function (string $prefix) {
             Route::prefix($prefix)->group(function () {
+                #dd();
+                #$c = Container::getInstance();
+                #dd($c->getBindings());
+                #$controller = $c->call("BankidController@complete");
+
+                Route::get('/complete', [BankidController::class, 'complete']);
+                Route::get('/cancel', [BankidController::class, 'cancel']);
                 Route::get('/', [BankidController::class, 'index']);
+
             });
         });
     }
