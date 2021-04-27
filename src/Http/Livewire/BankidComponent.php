@@ -2,34 +2,34 @@
 
 namespace Patrikgrinsvall\LaravelBankid\Http\Livewire;
 
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Patrikgrinsvall\LaravelBankid\Bankid;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Arr;
 
 class BankidComponent extends Component
 {
     private $bankid;                                                                        // external dependency.
-    const DEFAULT_PERSONALNUMBER    = "193204101488";                                       // default value for personal number
-    protected $rules                = [ 'personalNumber' => 'required|min:12' ];            // validation rules
-    public $message                 = "Enter personal number";                              // default message
-    public $status                  = "WAITING";
-    public $personalNumber          = self::DEFAULT_PERSONALNUMBER;                         // inputbox prewritten personalNumber
-    protected $listeners            = [ 'personalNumberClick' => 'personalNumberClick' ];   // event for clicking input
-    public $currentState            = "";                                                   // current state
-    const STATES                    = ['WAITING', 'COLLECTING', 'ERROR', 'COMPLETE'];       // not used but we should have state machine
-    public $orderRef                = "";
+    const DEFAULT_PERSONALNUMBER = "193204101488";                                       // default value for personal number
+    protected $rules = [ 'personalNumber' => 'required|min:12' ];            // validation rules
+    public $message = "Enter personal number";                              // default message
+    public $status = "WAITING";
+    public $personalNumber = self::DEFAULT_PERSONALNUMBER;                         // inputbox prewritten personalNumber
+    protected $listeners = [ 'personalNumberClick' => 'personalNumberClick' ];   // event for clicking input
+    public $currentState = "";                                                   // current state
+    const STATES = ['WAITING', 'COLLECTING', 'ERROR', 'COMPLETE'];       // not used but we should have state machine
+    public $orderRef = "";
 
     /**
      * Initialize bankid here so we crash early if something missconfigured. (maybe not good for unit test @todo refactor)
      *
      * @param UUID $id
      */
-    public function __construct( $id = null )
+    public function __construct($id = null)
     {
         $this->bankid = new Bankid();
         $this->bankid->check_configuration();
-        parent::__construct( $id = null );
+        parent::__construct($id = null);
     }
 
     /**
@@ -39,8 +39,9 @@ class BankidComponent extends Component
      */
     public function personalNumberClick()
     {
-        if( $this->personalNumber === self::DEFAULT_PERSONALNUMBER )
+        if ($this->personalNumber === self::DEFAULT_PERSONALNUMBER) {
             $this->personalNumber = "";
+        }
     }
 
     /**
@@ -50,12 +51,16 @@ class BankidComponent extends Component
      */
     public function collect()
     {
-        if(Arr::exists(['pending'=>'true','collect'=>'true'], $this->status) === true) {
+        if (Arr::exists(['pending' => 'true','collect' => 'true'], $this->status) === true) {
             $result = $this->bankid->collect(['orderRef' => $this->orderRef]);
 
             $this->updateState($result);
-            if($result['status'] == 'complete') $this->message .= "<script>setTimeout(function(){window.location='/bankid/complete'},2000);</script>";
-        } else Log::error("not exit". $this->status);
+            if ($result['status'] == 'complete') {
+                $this->message .= "<script>setTimeout(function(){window.location='/bankid/complete'},2000);</script>";
+            }
+        } else {
+            Log::error("not exit". $this->status);
+        }
     }
 
     /**
@@ -64,8 +69,9 @@ class BankidComponent extends Component
      * @param [type] $result
      * @return void
      */
-    private function updateState(array $result) {
-        foreach($result as $key => $val) {
+    private function updateState(array $result)
+    {
+        foreach ($result as $key => $val) {
             $key = trim($key);
             $this->$key = trim($val);
             Log::error("setting $key to $val");
@@ -79,7 +85,7 @@ class BankidComponent extends Component
      */
     public function authenticate()
     {
-        $result = $this->bankid->Authenticate( $this->personalNumber );
+        $result = $this->bankid->Authenticate($this->personalNumber);
         $this->updateState($result);
     }
 
@@ -90,6 +96,6 @@ class BankidComponent extends Component
      */
     public function render()
     {
-        return view( 'livewire.bankid-personalnumber' ); // this is taken from project now, this should be published to resource folder
+        return view('livewire.bankid-personalnumber'); // this is taken from project now, this should be published to resource folder
     }
 }
