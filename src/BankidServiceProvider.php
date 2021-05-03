@@ -2,7 +2,10 @@
 
 namespace Patrikgrinsvall\LaravelBankid;
 
+use Illuminate\Auth\RequestGuard;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Config;
 use Patrikgrinsvall\LaravelBankid\Commands\BankidCommand;
 use Patrikgrinsvall\LaravelBankid\Http\Controllers\BankidController;
 use Livewire\Component;
@@ -10,6 +13,7 @@ use Livewire\Livewire;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Illuminate\Container\Container;
+use Barryvdh\Debugbar\ServiceProvider;
 
 class BankidServiceProvider extends PackageServiceProvider
 {
@@ -44,19 +48,33 @@ class BankidServiceProvider extends PackageServiceProvider
         $this->publishes([
             __DIR__ . "/../assets/images" => public_path('vendor/laravel-bankid')
         ], 'bankid-assets');
-
+//$this->app->register(new BankidController());
+#        $this->app->regu
         Route::macro('LaravelBankid', function (string $prefix) {
             Route::prefix($prefix)->group(function () {
-                #dd();
-                #$c = Container::getInstance();
-                #dd($c->getBindings());
-                #$controller = $c->call("BankidController@complete");
 
-                Route::get('/complete', [BankidController::class, 'complete']);
-                Route::get('/cancel', [BankidController::class, 'cancel']);
+                Route::get('/complete', [BankidController::class,'complete']);
+
+
+                Route::get('/cancel', [BankidController::class,'complete']);
                 Route::get('/', [BankidController::class, 'index']);
 
             });
         });
+    }
+        /**
+     * Register the guard.
+     *
+     * @param \Illuminate\Contracts\Auth\Factory  $auth
+     * @param array $config
+     * @return RequestGuard
+     */
+    protected function createGuard($auth, $config)
+    {
+        return new RequestGuard(
+            new Guard($auth, config('sanctum.expiration'), $config['provider']),
+            $this->app['request'],
+            $auth->createUserProvider($config['provider'] ?? null)
+        );
     }
 }

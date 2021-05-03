@@ -32,11 +32,13 @@
         "phpunit/phpunit": "^9.3",
         "spatie/laravel-ray": "^1.9",
         "vimeo/psalm": "^4.4"
+
     },
     "autoload": {
         "psr-4": {
             "Patrikgrinsvall\\LaravelBankid\\": "src",
-            "Patrikgrinsvall\\LaravelBankid\\Database\\Factories\\": "database/factories"
+            "Patrikgrinsvall\\LaravelBankid\\Database\\Factories\\": "database/factories",
+            "Patrikgrinsvall\\LaravelBankid\\BankidController": "src/Http/Controllers/BankidController"
         }
     },
     "autoload-dev": {

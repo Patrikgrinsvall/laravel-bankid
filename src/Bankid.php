@@ -1,12 +1,14 @@
 <?php
 
 namespace Patrikgrinsvall\LaravelBankid;
-
+use Illuminate\Foundation\AliasLoader;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\App;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Arr;
-
+use \Barryvdh\Debugbar\Facade;
+use \Composer\InstalledVersions;
 class Bankid
 {
     const BANKID_CODES = [
@@ -28,6 +30,15 @@ class Bankid
 
     public function check_configuration()
     {
+        $this->debugbar = false;
+        if(\Composer\InstalledVersions::isInstalled('barryvdh/laravel-debugbar')) {
+            $this->debugbar = true;
+            AliasLoader::getInstance(['Debugbar'=> \Barryvdh\Debugbar\Facade::class]);
+            $this->log("Debugbar found");
+        } else {
+            $this->log("debugbar not found");
+        }
+
         if(empty(config("bankid.ENDPOINT")))
             throw new \Exception('Environment variable ENDPOINT missing. Bankid endpoint not specified', 2);
         if(empty(config("bankid.SSL_CERT")))
@@ -54,6 +65,16 @@ class Bankid
     {
         return redirect('/bankid/complete');
     }
+    private $debugbar = null;
+
+    function log($message, $level = "error") {
+        if($this->debugbar == true){
+
+            \Debugbar::addMessage($message, "info");
+        } else {
+            Log::log($level, $message);
+        }
+    }
 
     /**
      * Collects a bankid response
@@ -66,7 +87,7 @@ class Bankid
 
 
 //         if($autoAllow == true) {
-//             Log::error("autoallow");
+//             $this->log("autoallow");
 //             $user = array(
 //                 'name' => 'Anders Andersson',
 //                 'status' => "complete",
@@ -107,10 +128,10 @@ class Bankid
                 'signature'         => isset($response['completionData'])?$response['completionData']['signature']:null,
             ];
 
-            Log::error("Bankid response before collapse: ".print_r($response,1));
+            $this->log("Bankid response before collapse: ".print_r($response,1));
             //$response = Arr::collapse($response);
             //$response = $this->flatten([$response]);
-            Log::error("Bankid response: ".print_r($response,1));
+            $this->log("Bankid response: ".print_r($response,1));
 
             session($response);
 
@@ -291,8 +312,8 @@ class Bankid
         $response = curl_exec($ch);
         $info = curl_getinfo($ch);
         $error_msg = curl_error($ch);
-        Log::error("->>". base_path(config("bankid.SSL_CERT")).", -- ". config("bankid.SSL_KEY_PASSWORD")." --".base_path(config("bankid.SSL_KEY")));
-        Log::error("Request (".config("bankid.ENDPOINT")."{$function}): ".$postdata. "bankid response:" . print_r($response,1) . print_r($info,1) . print_r($error_msg,1));
+        $this->log("->>". base_path(config("bankid.SSL_CERT")).", -- ". config("bankid.SSL_KEY_PASSWORD")." --".base_path(config("bankid.SSL_KEY")));
+        $this->log("Request (".config("bankid.ENDPOINT")."{$function}): ".$postdata. "bankid response:" . print_r($response,1) . print_r($info,1) . print_r($error_msg,1));
 
         if(strlen($error_msg) > 1) {
             throw new \Exception("Error when backend talking with bankid.." . print_r($error_msg,1));
