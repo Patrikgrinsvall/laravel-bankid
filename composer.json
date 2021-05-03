@@ -37,8 +37,7 @@
     "autoload": {
         "psr-4": {
             "Patrikgrinsvall\\LaravelBankid\\": "src",
-            "Patrikgrinsvall\\LaravelBankid\\Database\\Factories\\": "database/factories",
-            "Patrikgrinsvall\\LaravelBankid\\BankidController": "src/Http/Controllers/BankidController"
+            "Patrikgrinsvall\\LaravelBankid\\Database\\Factories\\": "database/factories"
         }
     },
     "autoload-dev": {
