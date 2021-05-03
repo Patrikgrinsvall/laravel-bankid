@@ -2,14 +2,12 @@
 
 namespace Patrikgrinsvall\LaravelBankid;
 
-use Illuminate\Container\Container;
 use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
 use Patrikgrinsvall\LaravelBankid\Commands\BankidCommand;
 use Patrikgrinsvall\LaravelBankid\Http\Controllers\BankidController;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Barryvdh\Debugbar\ServiceProvider;
 
 class BankidServiceProvider extends PackageServiceProvider
 {
@@ -44,11 +42,10 @@ class BankidServiceProvider extends PackageServiceProvider
         $this->publishes([
             __DIR__ . "/../assets/images" => public_path('vendor/laravel-bankid'),
         ], 'bankid-assets');
-//$this->app->register(new BankidController());
+        //$this->app->register(new BankidController());
 #        $this->app->regu
         Route::macro('LaravelBankid', function (string $prefix) {
             Route::prefix($prefix)->group(function () {
-
                 Route::get('/complete', [BankidController::class,'complete']);
 
 
@@ -57,7 +54,8 @@ class BankidServiceProvider extends PackageServiceProvider
             });
         });
     }
-        /**
+
+    /**
      * Register the guard.
      *
      * @param \Illuminate\Contracts\Auth\Factory  $auth
