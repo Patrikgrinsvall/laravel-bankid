@@ -2,17 +2,13 @@
 
 namespace Patrikgrinsvall\LaravelBankid;
 
-use Illuminate\Auth\RequestGuard;
+use Illuminate\Container\Container;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Config;
+use Livewire\Livewire;
 use Patrikgrinsvall\LaravelBankid\Commands\BankidCommand;
 use Patrikgrinsvall\LaravelBankid\Http\Controllers\BankidController;
-use Livewire\Component;
-use Livewire\Livewire;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Illuminate\Container\Container;
 use Barryvdh\Debugbar\ServiceProvider;
 
 class BankidServiceProvider extends PackageServiceProvider
@@ -42,11 +38,11 @@ class BankidServiceProvider extends PackageServiceProvider
         */
 
         $this->loadViewsFrom(__DIR__ . '/../resources/views/', 'LaravelBankid');
-        if (!$this->app->runningInConsole()) {
+        if (! $this->app->runningInConsole()) {
             Livewire::component('bankidcomponent', Http\Livewire\BankidComponent::class);
         }
         $this->publishes([
-            __DIR__ . "/../assets/images" => public_path('vendor/laravel-bankid')
+            __DIR__ . "/../assets/images" => public_path('vendor/laravel-bankid'),
         ], 'bankid-assets');
 //$this->app->register(new BankidController());
 #        $this->app->regu
@@ -58,7 +54,6 @@ class BankidServiceProvider extends PackageServiceProvider
 
                 Route::get('/cancel', [BankidController::class,'complete']);
                 Route::get('/', [BankidController::class, 'index']);
-
             });
         });
     }
