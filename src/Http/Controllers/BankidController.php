@@ -18,7 +18,10 @@ class BankidController extends Controller
 
     public function complete()
     {
-        if(config("bankid.completeUrl") && !empty(config("bankid.completeUrl"))) return redirect(config("bankid.completeUrl"));
+        if (config("bankid.completeUrl") && ! empty(config("bankid.completeUrl"))) {
+            return redirect(config("bankid.completeUrl"));
+        }
+
         return "Fill out completeUrl in your config/bankid.php. If you are missing config/bankid.php then run php artisan vendor:publish ";
     }
 
