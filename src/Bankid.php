@@ -127,7 +127,6 @@ class Bankid
                 'type'              => $type,
                 'signature'         => isset($response['completionData'])?$response['completionData']['signature']:null,
             ];
-/** HERE WE SHOULD CHECK IF DONE AND IF SO SET USER!!!!! */
             $this->log("Bankid response before collapse: ".print_r($response,1));
             //$response = Arr::collapse($response);
             //$response = $this->flatten([$response]);
