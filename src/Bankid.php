@@ -232,7 +232,6 @@ class Bankid
         if(isset($response['errorCode'])) {
             $response['message'] = $response['details'];
             $response['status'] = $response['errorCode'];
-
         }
         if(isset($response['hintCode'])) {
             $response['message'] = $response['hintCode'];

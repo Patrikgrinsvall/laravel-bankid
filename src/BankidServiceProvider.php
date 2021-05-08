@@ -42,13 +42,10 @@ class BankidServiceProvider extends PackageServiceProvider
         $this->publishes([
             __DIR__ . "/../assets/images" => public_path('vendor/laravel-bankid'),
         ], 'bankid-assets');
-        //$this->app->register(new BankidController());
-#        $this->app->regu
+
         Route::macro('LaravelBankid', function (string $prefix) {
             Route::prefix($prefix)->group(function () {
                 Route::get('/complete', [BankidController::class,'complete']);
-
-
                 Route::get('/cancel', [BankidController::class,'complete']);
                 Route::get('/', [BankidController::class, 'index']);
             });

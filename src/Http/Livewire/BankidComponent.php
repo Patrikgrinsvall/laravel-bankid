@@ -3,6 +3,7 @@ namespace Patrikgrinsvall\LaravelBankid\Http\Livewire;
 
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\App;
 use Livewire\Component;
 use Patrikgrinsvall\LaravelBankid\Bankid;
 
@@ -25,8 +26,10 @@ class BankidComponent extends Component
      */
     public function __construct($id = null)
     {
+        App::setLocale("sv");
         $this->bankid = new Bankid();
         $this->bankid->check_configuration();
+        $this->message = __('bankid.RFA1');
         parent::__construct($id = null);
     }
 
@@ -79,6 +82,7 @@ class BankidComponent extends Component
             $this->$key = trim($val);
             Log::error("setting $key to $val");
         }
+        $this->message = __('bankid.RFA1');
     }
 
     /**

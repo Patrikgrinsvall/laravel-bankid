@@ -21,5 +21,5 @@ return [
     'RFA19' => 'Would you like to identify yourself or sign with a BankID on this computer or with a Mobile BankID?',
     'RFA20' => 'Would you like to identify yourself or sign with a BankID on this device or with a BankID on another device?',
     'RFA21' => 'Identification or signing in progress.',
-    'RFA22' => 'Unknown error. Please try again.',
+    'RFA22' => 'Unknown error. Please try again.'
 ];

@@ -1,6 +1,8 @@
 <div class="container flex px-5 py-24 mx-auto">
     <div class="relative z-10 flex flex-col w-full p-8 mt-10 bg-white rounded-lg shadow-md border-1 lg:w-1/3 md:w-1/2 md:m-auto md:mt-0">
-        <h2 class="mb-1 text-lg font-semibold text-gray-900 title-font">{{ $message }} ({{ $status}})</h2>
+        <h2 class="mb-1 text-lg font-semibold text-gray-900 title-font">
+            <span wire:model="message" >{{$message}}</span>
+        </h2>
 
         <div class="relative flex items-stretch flex-grow mb-4 focus-within:z-10">
             <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -11,26 +13,39 @@
             </div>
             @error('name') <span class="error">{{{ $message }}}</span> @enderror
 
-            @if($status == 'collect') <div wire:poll="collect()"></div> @endif
+
+            @if($orderRef != '') <div wire:poll="collect()"></div> @endif
             @if($status == 'pending') <div wire:poll="collect()"></div> @endif
-            @if($status == 'complete') {!! $message !!} @endif
+            @if($status == 'complete') {!! $errorCode !!} @endif
 
 
             <input
                 wire:model="personalNumber"
                 wire:click="$emitSelf('personalNumberClick')"
+                wire:dirty.class="border-red-500"
                 type = "text" name="personalNumber"
                 class="px-3 py-2 pl-10 border rounded shadow appearance-none text-grey-darker"
                 placeholder="{{ $personalNumber }}"
             />
+
         </div>
 
         <div class="pt-5">
             <div class="flex justify-center">
-                <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <div wire:loading wire:target="authenticate, collect" >{{$status}}</div>
+            </div>
+        </div>
+        <div class="pt-5">
+            <div class="flex justify-center">
+                <a href="{{ config('bankid.cancelUrl')}}"><button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     Cancel
-                </button>
-                <button wire:click = "authenticate"
+                </button></a>
+                <button
+                wire:click = "authenticate"
+                wire:target="authenticate,collect"
+                wire:loading.class.remove="bg-green-600"
+                wire:loading.class="bg-gray"
+                wire:loading.attr="disabled"
                     class = "inline-flex justify-center px-4 py-2 ml-3 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md shadow-sm hover:bg-green-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                     Login
                 </button>
