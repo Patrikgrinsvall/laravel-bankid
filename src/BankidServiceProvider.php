@@ -20,11 +20,13 @@ class BankidServiceProvider extends PackageServiceProvider
          */
         $package
             ->name('laravel-bankid')
-            ->hasConfigFile("bankid")
+            ->hasConfigFile()
             ->hasViews(true)
-            ->hasMigration('create_laravel_bankid_table')
+            //->hasMigration('create_laravel_bankid_table')
             ->hasAssets(true)
-            ->hasCommand(BankidCommand::class);
+            ->hasTranslations(true);
+            //->hasCommand(BankidCommand::class);
+        $this->app->bind('Bankid', Bankid::class,true);
     }
 
     public function boot()
@@ -34,14 +36,27 @@ class BankidServiceProvider extends PackageServiceProvider
             $this->package->basePath('/../Components') => base_path("app/View/Components/vendor/{$this->package->shortName()}"),
         ], "{$this->package->name}-components");
         */
+        //parent::boot();
 
         $this->loadViewsFrom(__DIR__ . '/../resources/views/', 'LaravelBankid');
         if (! $this->app->runningInConsole()) {
             Livewire::component('bankidcomponent', Http\Livewire\BankidComponent::class);
         }
+
         $this->publishes([
-            __DIR__ . "/../assets/images" => public_path('vendor/laravel-bankid'),
-        ], 'bankid-assets');
+            $this->package->basePath("/../assets/images") => public_path('vendor/bankid'),
+        ],  $this->package->shortName());
+
+        $this->publishes([
+            $this->package->basePath("/../resources/lang/") => base_path('resources/lang/'),
+        ],  $this->package->shortName());
+
+        $this->loadTranslationsFrom(
+            $this->package->basePath('/../resources/lang/'),
+            $this->package->shortName()
+        );
+ #$this->loadTranslationsFrom(base_path('resources/lang/vendor/bankid/'),'bankid');
+
 
         Route::macro('LaravelBankid', function (string $prefix) {
             Route::prefix($prefix)->group(function () {

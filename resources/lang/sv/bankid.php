@@ -21,5 +21,9 @@ return [
     'RFA20' => 'Vill du identifiera dig eller skriva under med ett BankID på den här enheten eller med ett BankID på en annan enhet?',
     'RFA21' => 'Identifiering eller underskrift pågår.',
     'RFA22' => 'Okänt fel. Försök igen.',
+    'EnterPersonalnumber' => 'Skriv in ditt personnummer för att logga in',
+    'defaultPersonalnumber' => '193204101488',
+
+
 
 ];

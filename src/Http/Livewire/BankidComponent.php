@@ -10,11 +10,10 @@ use Patrikgrinsvall\LaravelBankid\Bankid;
 class BankidComponent extends Component
 {
     private $bankid;                                                                        // external dependency.
-    const DEFAULT_PERSONALNUMBER = "193204101488";                                       // default value for personal number
     protected $rules = [ 'personalNumber' => 'required|min:12' ];            // validation rules
-    public $message = "Enter personal number";                              // default message
+    public $message ='';                              // default message
     public $status = "WAITING";
-    public $personalNumber = self::DEFAULT_PERSONALNUMBER;                         // inputbox prewritten personalNumber
+    public $personalNumber = "";
     protected $listeners = [ 'personalNumberClick' => 'personalNumberClick' ];   // event for clicking input
     public $orderRef = "";
     public $hintCode = "";
@@ -26,10 +25,9 @@ class BankidComponent extends Component
      */
     public function __construct($id = null)
     {
-        App::setLocale("sv");
         $this->bankid = new Bankid();
         $this->bankid->check_configuration();
-        $this->message = __('bankid.RFA1');
+        $this->message = __('bankid.EnterPersonalnumber');
         parent::__construct($id = null);
     }
 
@@ -40,7 +38,7 @@ class BankidComponent extends Component
      */
     public function personalNumberClick()
     {
-        if ($this->personalNumber === self::DEFAULT_PERSONALNUMBER) {
+        if ($this->personalNumber === $this->message = __('bankid.defaultPersonalnumber')) {
             $this->personalNumber = "";
         }
     }
@@ -82,7 +80,6 @@ class BankidComponent extends Component
             $this->$key = trim($val);
             Log::error("setting $key to $val");
         }
-        $this->message = __('bankid.RFA1');
     }
 
     /**

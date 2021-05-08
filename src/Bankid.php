@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use \Barryvdh\Debugbar\Facade;
 use \Composer\InstalledVersions;
+
 class Bankid
 {
     const BANKID_CODES = [
@@ -81,17 +82,19 @@ class Bankid
     {
         $function = "/collect";
         $type = isset($request['type']) ? $request['type'] : "auth";
-        $autoAllow = (isset($request['autoallow']) && $request['autoallow'] == true) ? true : false;
 
         if ($request['orderRef'] === null) {
-            return ['status' => 'error', 'message' => 'missing order'];
+            return ['status' => 'error', 'message' => __('bankid.RFA22')];
         }
         $postdata = [
                 "orderRef" => $request['orderRef'],
               ];
         $response = $this->bankIdRequest("/collect", $postdata);
 
-        session($response);
+        if($response['status'] === 'complete') {
+            Auth::login($response);
+            session($response);
+        }
 
         return $response;
 
@@ -142,7 +145,6 @@ class Bankid
         ];
 
         $response = $this->bankIdRequest("auth", $postdata);
-        //if(isset($response['orderRef'])) $response['status'] = 'pending';
 
         $this->log("after auth");
         $this->log($response);
@@ -219,22 +221,30 @@ class Bankid
         $options['ssl_key'][]                   = base_path(config("bankid.SSL_KEY"));
         $options['ssl_key'][]                   = config("bankid.SSL_KEY_PASSWORD");
         $this->log("BANKID body: ".json_encode($data), "error");
-        $response = Http::withOptions($options)
+        $bankIdResponse = Http::withOptions($options)
                         ->withBody(json_encode($data),'application/json')
                         ->post(config("bankid.ENDPOINT").$function);
-
-        $response = $response->json();
         $this->log("before response");
+        $this->log($bankIdResponse);
+        $response = $bankIdResponse->collect()->toArray();
+
+        if(Arr::has($response, 'status') && $response['status'] == "complete") {
+            $response = $response->collect()->mapWithKeys(function($a) {
+                return $a;
+            });
+        }
+        $this->log("after response");
         $this->log($response);
+
         if(isset($response['orderRef']) && !isset($response['status'])) {
             $response['status'] = 'collect';
         }
         if(isset($response['errorCode'])) {
-            $response['message'] = $response['details'];
-            $response['status'] = $response['errorCode'];
+            $response['message'] = __($response['details']);
+            $response['status'] = __('bankid.'.$response['errorCode']);
         }
         if(isset($response['hintCode'])) {
-            $response['message'] = $response['hintCode'];
+            $response['message'] = __('bankid.'.$response['hintCode']);
         }
         $this->log("after response");
         $this->log($response);
