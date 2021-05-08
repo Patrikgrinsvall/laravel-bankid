@@ -2,24 +2,26 @@
 
 namespace Patrikgrinsvall\LaravelBankid\Http\Livewire;
 
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Patrikgrinsvall\LaravelBankid\Bankid;
+use Illuminate\Support\Collection;
+use Patrikgrinsvall\LaravelBankid\Models\BankidResult;
 
 class BankidComponent extends Component
 {
     private $bankid;                                                                        // external dependency.
     const DEFAULT_PERSONALNUMBER = "193204101488";                                       // default value for personal number
     protected $rules = [ 'personalNumber' => 'required|min:12' ];            // validation rules
-    public $message = "Enter personal number";                              // default message
-    public $status = "WAITING";
     public $personalNumber = self::DEFAULT_PERSONALNUMBER;                         // inputbox prewritten personalNumber
     protected $listeners = [ 'personalNumberClick' => 'personalNumberClick' ];   // event for clicking input
-    public $currentState = "";                                                   // current state
-    const STATES = ['WAITING', 'COLLECTING', 'ERROR', 'COMPLETE'];       // not used but we should have state machine
-    public $orderRef = "";
-
+    public $status = "";
+    public $errorCode = "";
+    public $details ="";
+    public $bankidResult;
+    public $orderRef;
     /**
      * Initialize bankid here so we crash early if something missconfigured. (maybe not good for unit test @todo refactor)
      *
@@ -27,6 +29,10 @@ class BankidComponent extends Component
      */
     public function __construct($id = null)
     {
+        /*$this->bankidResult = new BankidResult();
+        $this->bankidResult =$this->bankidResult;
+*/
+        $this->status = "waiting";
         $this->bankid = new Bankid();
         $this->bankid->check_configuration();
         parent::__construct($id = null);
@@ -51,16 +57,12 @@ class BankidComponent extends Component
      */
     public function collect()
     {
-        if (Arr::exists(['pending' => 'true','collect' => 'true'], $this->status) === true) {
-            $result = $this->bankid->collect(['orderRef' => $this->orderRef]);
-
-            $this->updateState($result);
-            if ($result['status'] == 'complete') {
-                $this->message .= "<script>setTimeout(function(){window.location='/bankid/complete'},2000);</script>";
-            }
-        } else {
-            Log::error("not exit". $this->status);
+        $bankidResult = $this->bankid->Collect($this->bankidResult);
+        $this->updateState($bankidResult);
+        if ($this->bankidResult['status'] == 'complete') {
+            $this->errorCode .= "<script>setTimeout(function(){window.location='/bankid/complete'},2000);</script>";
         }
+
     }
 
     /**
@@ -69,15 +71,25 @@ class BankidComponent extends Component
      * @param [type] $result
      * @return void
      */
-    private function updateState(array $result)
+  /*  private function updateState($bankidResult)
     {
-        foreach ($result as $key => $val) {
-            $key = trim($key);
-            $this->$key = trim($val);
-            Log::error("setting $key to $val");
-        }
-    }
+        $this->status   = (isset($bankidResult['status']) && $this->status <> $bankidResult['status']) ? $bankidResult['status'] : $this->status;
+        $this->errorCode = isset($bankidResult['errorCode']) ? $bankidResult['errorCode']:"";
+        $this->details  = isset($bankidResult['details']) ? $bankidResult['details']:"";
 
+        if(!empty($bankidResult['errorCode'])) $this->status = $bankidResult['errorCode'];
+
+    }
+*/
+private function updateState(array $result)
+{
+    foreach ($result as $key => $val) {
+        $key = trim($key);
+        $this->$key = trim($val);
+        Log::error("setting $key to $val");
+    }
+    $this->bankidResult = $result;
+}
     /**
      * Start an auth
      *
@@ -85,8 +97,10 @@ class BankidComponent extends Component
      */
     public function authenticate()
     {
-        $result = $this->bankid->Authenticate($this->personalNumber);
-        $this->updateState($result);
+        $this->status = "collect";
+        $this->bankidResult = $this->bankid->Authenticate($this->personalNumber);
+        $this->updateState($this->bankidResult);
+
     }
 
     /**
