@@ -60,8 +60,8 @@ class BankidServiceProvider extends PackageServiceProvider
 
         Route::macro('LaravelBankid', function (string $prefix) {
             Route::prefix($prefix)->group(function () {
-                Route::get('/complete', [BankidController::class,'complete']);
-                Route::get('/cancel', [BankidController::class,'complete']);
+                Route::get('/complete', [BankidController::class,'complete'])->name('bankid.complete');;
+                Route::get('/cancel', [BankidController::class,'cancel']);
                 Route::get('/', [BankidController::class, 'index']);
             });
         });

@@ -28,6 +28,7 @@ class BankidComponent extends Component
         $this->bankid = new Bankid();
         $this->bankid->check_configuration();
         $this->message = __('bankid.EnterPersonalnumber');
+        $this->personalNumber = __('bankid.defaultPersonalnumber');
         parent::__construct($id = null);
     }
 
@@ -38,7 +39,7 @@ class BankidComponent extends Component
      */
     public function personalNumberClick()
     {
-        if ($this->personalNumber === $this->message = __('bankid.defaultPersonalnumber')) {
+        if ($this->personalNumber === __('bankid.defaultPersonalnumber')) {
             $this->personalNumber = "";
         }
     }
@@ -50,7 +51,6 @@ class BankidComponent extends Component
      */
     public function collect()
     {
-
         if (in_array($this->status, ['collect', 'pending', 'outstandingTransaction']) &&
             in_array($this->status, ['failed', 'error', 'alreadyInProgress']) === false)
         {
@@ -59,9 +59,9 @@ class BankidComponent extends Component
             $this->updateState($result);
             if ($result['status'] == 'complete') {
                 $this->message .= "<script>setTimeout(function(){window.location='/bankid/complete'},2000);</script>";
+                $this->status = "complete";
             }
         } else {
-            Log::error("Unknown status: ". $this->status);
             $this->status = 'failed';
             unset($this->orderRef);
         }

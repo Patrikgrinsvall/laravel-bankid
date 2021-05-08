@@ -14,15 +14,15 @@
             @error('name') <span class="error">{{{ $message }}}</span> @enderror
 
 
-            @if($orderRef != '') <div wire:poll="collect()"></div> @endif
-            @if($status == 'pending') <div wire:poll="collect()"></div> @endif
-            @if($status == 'complete') {!! $errorCode !!} @endif
+            @if($orderRef != '') <div wire:poll="collect($status)"></div> @endif
+            @if($status == 'pending') <div wire:poll="collect($status)"></div> @endif
+            @if($status == 'complete') {!! $message !!} @endif
 
 
             <input
-                wire:model="personalNumber"
+                wire:model.lazy="personalNumber"
+                wire:keydown.enter="$emitSelf('personalNumberClick')"
                 wire:click="$emitSelf('personalNumberClick')"
-                wire:dirty.class="border-red-500"
                 type = "text" name="personalNumber"
                 class="px-3 py-2 pl-10 border rounded shadow appearance-none text-grey-darker"
                 placeholder="{{ $personalNumber }}"
@@ -32,7 +32,7 @@
 
         <div class="pt-5">
             <div class="flex justify-center">
-                <div wire:loading wire:target="authenticate, collect" >{{$status}}</div>
+                <div wire:loading wire:target="authenticate(), collect()" >{{$status}}</div>
             </div>
         </div>
         <div class="pt-5">
@@ -42,10 +42,9 @@
                 </button></a>
                 <button
                 wire:click = "authenticate"
-                wire:target="authenticate,collect"
+                wire:target = "autenticate(),collect()"
+                wire:loading.delay
                 wire:loading.class.remove="bg-green-600"
-                wire:loading.class="bg-gray"
-                wire:loading.attr="disabled"
                     class = "inline-flex justify-center px-4 py-2 ml-3 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md shadow-sm hover:bg-green-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                     Login
                 </button>

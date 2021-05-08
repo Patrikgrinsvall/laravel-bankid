@@ -3,14 +3,14 @@
 namespace Patrikgrinsvall\LaravelBankid;
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use \Barryvdh\Debugbar\Facade;
 use \Composer\InstalledVersions;
-
+use Patrikgrinsvall\LaravelBankid\Http\Controllers\BankidController;
 class Bankid
 {
     const BANKID_CODES = [
@@ -36,9 +36,6 @@ class Bankid
         if(\Composer\InstalledVersions::isInstalled('barryvdh/laravel-debugbar')) {
             $this->debugbar = true;
             AliasLoader::getInstance(['Debugbar'=> \Barryvdh\Debugbar\Facade::class]);
-            $this->log("Debugbar found");
-        } else {
-            $this->log("debugbar not found");
         }
 
         if(empty(config("bankid.ENDPOINT"))) {
@@ -58,8 +55,6 @@ class Bankid
         }
     }
 
-    private $orderRef = null;
-
     private $debugbar = null;
 
     function log($message, $level = "error") {
@@ -67,9 +62,11 @@ class Bankid
             if(is_string($message) === false) {
                 \Debugbar::addMessage("message is not string". print_r($message,1), "info");
                 $message = print_r($message,1);
+                Log::log($level, $message);
+            } else {
+                \Debugbar::addMessage($message, "info");
+                Log::log($level, $message);
             }
-            \Debugbar::addMessage($message, "info");
-            Log::log($level, $message);
         } else {
             Log::log($level, $message);
         }
@@ -87,17 +84,20 @@ class Bankid
             return ['status' => 'error', 'message' => __('bankid.RFA22')];
         }
         $postdata = [
-                "orderRef" => $request['orderRef'],
-              ];
+            "orderRef" => $request['orderRef'],
+        ];
         $response = $this->bankIdRequest("/collect", $postdata);
 
         if($response['status'] === 'complete') {
-            Auth::login($response);
+            /*$user = config('bankid.userModel');
+            $user = new $user();*/
+            $response['loggedin'] = 'true';
             session($response);
+            return $response;
+//            redirect()->route('bankid.complete');
         }
 
         return $response;
-
     }
 
     public function saveTransaction()
@@ -145,13 +145,52 @@ class Bankid
         ];
 
         $response = $this->bankIdRequest("auth", $postdata);
-
-        $this->log("after auth");
-        $this->log($response);
         return $response;
     }
 
     /**
+     * Do a bankid request and returns response
+     *
+     * function = authenticate / collect
+     * data     = array with data,
+     */
+    public function bankIdRequest($function, $data)
+    {
+        $this->log("requesting");
+        $options['verify']                      = false;//base_path(config("bankid.CA_CERT"));
+        $options['cert']                        = base_path(config("bankid.SSL_CERT"));
+        $options['ssl_key'][]                   = base_path(config("bankid.SSL_KEY"));
+        $options['ssl_key'][]                   = config("bankid.SSL_KEY_PASSWORD");
+        $this->log("BANKID body: ".json_encode($data), "error");
+        $response = Http::withOptions($options)
+                        ->withBody(json_encode($data),'application/json')
+                        ->post(config("bankid.ENDPOINT").$function);
+        $this->log("Bankid said: ");
+        $response = $response->json();
+        $this->log(print_r($response,1));
+        if(isset($response['status']) && $response['status'] == "complete") {
+            $newResponse = array_merge($response['completionData']['user'],
+                                    $response['completionData']['device']);
+        $newResponse['signature']= $response['completionData']['signature'];
+        $newResponse['orderRef']= $response['orderRef'];
+        $newResponse['status']= $response['status'];
+        return $newResponse;
+        }
+        if(isset($response['orderRef']) && !isset($response['status'])) {
+            $response['status'] = 'collect';
+        }
+        if(isset($response['errorCode'])) {
+            $response['message'] = __($response['details']);
+            $response['status'] = $response['errorCode'];
+        }
+
+        if(isset($response['hintCode'])) {
+            $response['message'] = __('bankid.'.$response['hintCode']);
+        }
+        return $response;
+    }
+
+  /**
      * initiates an authentication
      */
     public function Sign(Request $request)
@@ -205,50 +244,5 @@ class Bankid
         return [
             'orderRef' => $response['orderRef'],
         ];
-    }
-
-    /**
-     * Do a bankid request and returns response
-     *
-     * function = authenticate / collect
-     * data     = array with data,
-     */
-    public function bankIdRequest($function, $data)
-    {
-        $this->log("requesting");
-        $options['verify']                      = false;//base_path(config("bankid.CA_CERT"));
-        $options['cert']                        = base_path(config("bankid.SSL_CERT"));
-        $options['ssl_key'][]                   = base_path(config("bankid.SSL_KEY"));
-        $options['ssl_key'][]                   = config("bankid.SSL_KEY_PASSWORD");
-        $this->log("BANKID body: ".json_encode($data), "error");
-        $bankIdResponse = Http::withOptions($options)
-                        ->withBody(json_encode($data),'application/json')
-                        ->post(config("bankid.ENDPOINT").$function);
-        $this->log("before response");
-        $this->log($bankIdResponse);
-        $response = $bankIdResponse->collect()->toArray();
-
-        if(Arr::has($response, 'status') && $response['status'] == "complete") {
-            $response = $response->collect()->mapWithKeys(function($a) {
-                return $a;
-            });
-        }
-        $this->log("after response");
-        $this->log($response);
-
-        if(isset($response['orderRef']) && !isset($response['status'])) {
-            $response['status'] = 'collect';
-        }
-        if(isset($response['errorCode'])) {
-            $response['message'] = __($response['details']);
-            $response['status'] = __('bankid.'.$response['errorCode']);
-        }
-        if(isset($response['hintCode'])) {
-            $response['message'] = __('bankid.'.$response['hintCode']);
-        }
-        $this->log("after response");
-        $this->log($response);
-
-        return $response;
     }
 }

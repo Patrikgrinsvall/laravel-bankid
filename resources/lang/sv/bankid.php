@@ -23,6 +23,22 @@ return [
     'RFA22' => 'Okänt fel. Försök igen.',
     'EnterPersonalnumber' => 'Skriv in ditt personnummer för att logga in',
     'defaultPersonalnumber' => '193204101488',
+    'pending_outstandingTransaction' => 'RFA1',
+    'pending_noClient' => 'RFA1',
+    'userSign' => 'RFA9',
+    'started' => 'RFA14',
+    'pending' => 'RFA9',
+    'alreadyInProgress' => 'RFA4',
+    'invalidParameters' => 'RFA22',
+    'startFailed' => 'RFA17-A',
+    'cancelled' => 'RFA3',
+    'userCancel' => 'RFA6',
+    'certificateErr' => 'RFA16',
+    'expiredTransaction' => 'RFA8',
+    'requestTimeout' => 'RFA5',
+    'maintenance' => 'RFA5',
+    'internalError' => 'RFA5',
+    'failed_expiredTransaction' => 'RFA6',
 
 
 
