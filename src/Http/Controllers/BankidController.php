@@ -22,11 +22,14 @@ class BankidController extends Controller
             return redirect(config("bankid.completeUrl"));
         }
 
-        return "Fill out completeUrl in your config/bankid.php. If you are missing config/bankid.php then run php artisan vendor:publish ";
+        return "Fill out completeUrl in your config/bankid.php or .env file. If you are missing config/bankid.php then run php artisan vendor:publish ";
     }
 
     public function cancel()
     {
-        return "This route you should replace with your controller::action to use when user cancels";
+        if (config("bankid.cancelUrl") && ! empty(config("bankid.cancelUrl"))) {
+            return redirect(config("bankid.cancelUrl"));
+        }
+        return "Fill out cancelUrl in your config/bankid.php or .env file. ";
     }
 }
