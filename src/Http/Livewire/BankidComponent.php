@@ -1,5 +1,4 @@
 <?php
-
 namespace Patrikgrinsvall\LaravelBankid\Http\Livewire;
 
 use Illuminate\Support\Arr;
@@ -16,9 +15,8 @@ class BankidComponent extends Component
     public $status = "WAITING";
     public $personalNumber = self::DEFAULT_PERSONALNUMBER;                         // inputbox prewritten personalNumber
     protected $listeners = [ 'personalNumberClick' => 'personalNumberClick' ];   // event for clicking input
-    public $currentState = "";                                                   // current state
-    const STATES = ['WAITING', 'COLLECTING', 'ERROR', 'COMPLETE'];       // not used but we should have state machine
     public $orderRef = "";
+    public $hintCode = "";
 
     /**
      * Initialize bankid here so we crash early if something missconfigured. (maybe not good for unit test @todo refactor)
@@ -51,7 +49,10 @@ class BankidComponent extends Component
      */
     public function collect()
     {
-        if (Arr::exists(['pending' => 'true','collect' => 'true'], $this->status) === true) {
+
+        if (in_array($this->status, ['collect', 'pending', 'outstandingTransaction']) &&
+            in_array($this->status, ['failed', 'error', 'alreadyInProgress']) === false)
+        {
             $result = $this->bankid->collect(['orderRef' => $this->orderRef]);
 
             $this->updateState($result);
@@ -59,7 +60,9 @@ class BankidComponent extends Component
                 $this->message .= "<script>setTimeout(function(){window.location='/bankid/complete'},2000);</script>";
             }
         } else {
-            Log::error("not exit". $this->status);
+            Log::error("Unknown status: ". $this->status);
+            $this->status = 'failed';
+            unset($this->orderRef);
         }
     }
 

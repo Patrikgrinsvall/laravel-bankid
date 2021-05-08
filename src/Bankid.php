@@ -4,6 +4,8 @@ namespace Patrikgrinsvall\LaravelBankid;
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use \Barryvdh\Debugbar\Facade;
@@ -38,7 +40,7 @@ class Bankid
             $this->log("debugbar not found");
         }
 
-        if(empty(config("bankid.ENDPOINT")))
+        if(empty(config("bankid.ENDPOINT"))) {
             throw new \Exception('Environment variable ENDPOINT missing. Bankid endpoint not specified', 2);
         }
         if (empty(config("bankid.SSL_CERT"))) {
@@ -57,26 +59,16 @@ class Bankid
 
     private $orderRef = null;
 
-    public function complete()
-    {
-        return redirect('/bankid/complete');
-    }
-
-    public function cancel()
-    {
-        return redirect('/bankid/cancel');
-    }
-
-    public function error()
-    {
-        return redirect('/bankid/complete');
-    }
     private $debugbar = null;
 
     function log($message, $level = "error") {
         if($this->debugbar == true){
-
+            if(is_string($message) === false) {
+                \Debugbar::addMessage("message is not string". print_r($message,1), "info");
+                $message = print_r($message,1);
+            }
             \Debugbar::addMessage($message, "info");
+            Log::log($level, $message);
         } else {
             Log::log($level, $message);
         }
@@ -98,48 +90,11 @@ class Bankid
                 "orderRef" => $request['orderRef'],
               ];
         $response = $this->bankIdRequest("/collect", $postdata);
-        $response = [
-                'name' => isset($response['completionData']) ? $response['completionData']['user']['name'] : null,
-                'status' => $response['status'],
-                'personalNumber' => isset($response['completionData']) ? $response['completionData']['user']['personalNumber'] : null,
-                'givenName' => isset($response['completionData']) ? $response['completionData']['user']['givenName'] : null,
-                'surname' => isset($response['completionData']) ? $response['completionData']['user']['surname'] : null,
-                'orderRef' => $request['orderRef'],
-                'type' => $type,
-                'signature' => isset($response['completionData'])?$response['completionData']['signature']:null,
-            ];
-            $this->log("Bankid response before collapse: ".print_r($response,1));
-            //$response = Arr::collapse($response);
-            //$response = $this->flatten([$response]);
-            $this->log("Bankid response: ".print_r($response,1));
 
         session($response);
 
-
-
-
-
-
         return $response;
 
-        //}
-    }
-
-    public $flattened = [];
-
-    public function flatten(array $array)
-    {
-        if (is_array($array) && count($array) > 0) {
-            foreach ($array as $member) {
-                if (! is_array($member)) {
-                    $this->flattened[] = $member;
-                } else {
-                    $this->flatten($member);
-                }
-            }
-        }
-
-        return $this->flattened;
     }
 
     public function saveTransaction()
@@ -186,38 +141,12 @@ class Bankid
             'endUserIp' => $endUserIp,
         ];
 
-        $response = $this->bankIdRequest("/auth", $postdata);
-        Log::debug("bankid response:" . print_r($response, 1));
-        $this->orderRef = $response['orderRef'] ?? null;
-        if (isset($response[ 'orderRef' ])) {
-            return [
-                'status' => 'collect',
-                'orderRef' => $response[ 'orderRef' ],
-                'message' => 'Complete authentication on your other device',
-            ];
-        }
+        $response = $this->bankIdRequest("auth", $postdata);
+        //if(isset($response['orderRef'])) $response['status'] = 'pending';
 
-        if (isset($response[ 'status' ]) && $response[ 'status' ] == 'error') {
-            return [
-                'status' => 'error',
-                'message' => 'Bankid returned an error. Maybe you tried to start twice or something else weird happend. Please try again.',
-            ];
-        }
-
-        if (isset($response[ 'errorCode' ]) &&
-            $response[ 'errorCode' ] == 'alreadyInProgress') {
-            return [
-                    'status' => 'error',
-                    'message' => 'You had already started a login. Now its canceled. Please try again.',
-                ];
-        }
-
-        Log::debug("Something we did not account for happened: " . print_r($response, 1));
-
-        return [
-            'status' => 'error',
-            'message' => 'Temporary error, please refresh page and try again.',
-        ];
+        $this->log("after auth");
+        $this->log($response);
+        return $response;
     }
 
     /**
@@ -284,48 +213,32 @@ class Bankid
      */
     public function bankIdRequest($function, $data)
     {
-        $postdata = json_encode($data);
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLINFO_HEADER_OUT, true);
-        curl_setopt($ch, CURLOPT_HEADER, false);
-        curl_setopt($ch, CURLOPT_URL, config("bankid.ENDPOINT") . $function);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-        curl_setopt($ch, CURLOPT_SSLCERT, base_path(config("bankid.SSL_CERT")));
-        curl_setopt($ch, CURLOPT_SSLKEY,  base_path(config("bankid.SSL_KEY")));
-        curl_setopt($ch, CURLOPT_KEYPASSWD, config("bankid.SSL_KEY_PASSWORD"));
-        curl_setopt($ch, CURLOPT_CAINFO, base_path(config("bankid.CA_CERT")));
-        $response = curl_exec($ch);
-        $info = curl_getinfo($ch);
-        $error_msg = curl_error($ch);
-<<<<<<< HEAD
-        $this->log("->>". base_path(config("bankid.SSL_CERT")).", -- ". config("bankid.SSL_KEY_PASSWORD")." --".base_path(config("bankid.SSL_KEY")));
-        $this->log("Request (".config("bankid.ENDPOINT")."{$function}): ".$postdata. "bankid response:" . print_r($response,1) . print_r($info,1) . print_r($error_msg,1));
-=======
-        Log::error("->>". base_path(config("bankid.SSL_CERT")).", -- ". config("bankid.SSL_KEY_PASSWORD")." --".base_path(config("bankid.SSL_KEY")));
-        Log::error("Request (".config("bankid.ENDPOINT")."{$function}): ".$postdata. "bankid response:" . print_r($response, 1) . print_r($info, 1) . print_r($error_msg, 1));
->>>>>>> dfa51ada9b6bea07a6a4baf56ebe8169ee799e51
+        $this->log("requesting");
+        $options['verify']                      = false;//base_path(config("bankid.CA_CERT"));
+        $options['cert']                        = base_path(config("bankid.SSL_CERT"));
+        $options['ssl_key'][]                   = base_path(config("bankid.SSL_KEY"));
+        $options['ssl_key'][]                   = config("bankid.SSL_KEY_PASSWORD");
+        $this->log("BANKID body: ".json_encode($data), "error");
+        $response = Http::withOptions($options)
+                        ->withBody(json_encode($data),'application/json')
+                        ->post(config("bankid.ENDPOINT").$function);
 
-        if (strlen($error_msg) > 1) {
-            throw new \Exception("Error when backend talking with bankid.." . print_r($error_msg, 1));
+        $response = $response->json();
+        $this->log("before response");
+        $this->log($response);
+        if(isset($response['orderRef']) && !isset($response['status'])) {
+            $response['status'] = 'collect';
         }
+        if(isset($response['errorCode'])) {
+            $response['message'] = $response['details'];
+            $response['status'] = $response['errorCode'];
 
-        $response = json_decode($response, true);
-        if (! empty($response['errorCode'])) {
-            return [
-                'status' => 'error',
-                'errorCode' => $response['errorCode'],
-            ];
         }
-
-        if (in_array($info['http_code'], self::SUCCESS_RESPONSE_CODES) === false) {
-            throw new \Exception("Serious error! Bankid didnt return http 200: " . print_r($info, 1));
+        if(isset($response['hintCode'])) {
+            $response['message'] = $response['hintCode'];
         }
-
+        $this->log("after response");
+        $this->log($response);
 
         return $response;
     }
