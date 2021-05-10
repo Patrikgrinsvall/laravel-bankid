@@ -1,13 +1,14 @@
 <?php
-
 namespace Patrikgrinsvall\LaravelBankid;
+
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
-use BankidUser;
+use Patrikgrinsvall\LaravelBankid\BankidUser;
 #use \Composer\InstalledVersions;
 class Bankid
 {
@@ -58,6 +59,14 @@ class Bankid
         }
     }
 
+    public function loggedin(){
+        if(Session::has('user')){
+            Session::get('user');
+        } else {
+            return false;
+        }
+    }
+
     /**
      * Collects a bankid response
      */
@@ -74,7 +83,10 @@ class Bankid
         if($response['status'] === 'complete') {
             $response['loggedin'] = 'true';
             $user = new BankidUser($response['user']);
-            Auth::login($user, true);
+            $this->log($user);
+            Session::put('user', $response['user']); // this should be done with real authsystem, one day
+            Session::save();
+            //Auth::login($user, true);
             return $response;
         }
 
@@ -134,12 +146,12 @@ class Bankid
         $response = $response->json();
         $this->log(print_r($response,1));
         if(isset($response['status']) && $response['status'] == "complete") {
-            $newResponse                = array_merge($response['completionData']['user'],
-                                            $response['completionData']['device']);
+            $newResponse['user']        = $response['completionData']['user'];
+            $newResponse['device']      = $response['completionData']['device'];
             $newResponse['signature']   = $response['completionData']['signature'];
             $newResponse['orderRef']    = $response['orderRef'];
             $newResponse['status']      = $response['status'];
-        return $newResponse;
+            return $newResponse;
         }
         if(isset($response['orderRef']) && !isset($response['status'])) {
             $response['status'] = 'collect';

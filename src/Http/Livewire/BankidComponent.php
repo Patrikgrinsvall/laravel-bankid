@@ -81,6 +81,7 @@ class BankidComponent extends Component
     private function updateState(array $result)
     {
         foreach ($result as $key => $val) {
+            if(!is_string($val)) continue;
             $key = trim($key);
             $this->$key = trim($val);
         }

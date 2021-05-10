@@ -9,22 +9,26 @@ use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 class BankidUser extends ArrayObject implements AuthenticatableContract
 {
     use Authenticatable;
+
     /**
      * Get the name of the unique identifier for the user.
      *
      * @return string
      */
     public function getAuthIdentifierName(){
-        return parent::getAuthIdentifierName();
+        return "personalNumber";
     }
-
+    public function __construct($array){
+        $array['rememberTokenName']="remember_token";
+        parent::__construct($array, ArrayObject::ARRAY_AS_PROPS );
+    }
     /**
      * Get the unique identifier for the user.
      *
      * @return mixed
      */
     public function getAuthIdentifier(){
-        return parent::getAuthIdentifierName();
+        return (string) $this->{$this->getAuthIdentifierName()};;
     }
 
     /**
@@ -33,7 +37,7 @@ class BankidUser extends ArrayObject implements AuthenticatableContract
      * @return string
      */
     public function getAuthPassword(){
-        return parent::getAuthIdentifierName();
+        return $this->personalNumber;
     }
 
     /**
@@ -42,7 +46,9 @@ class BankidUser extends ArrayObject implements AuthenticatableContract
      * @return string
      */
     public function getRememberToken(){
-        return parent::getAuthIdentifierName();
+        if (! empty($this->getRememberTokenName())) {
+            return (string) $this->{$this->getRememberTokenName()};
+        }
     }
 
     /**
@@ -52,7 +58,7 @@ class BankidUser extends ArrayObject implements AuthenticatableContract
      * @return void
      */
     public function setRememberToken($value){
-        return parent::getAuthIdentifierName();
+        return (string) $this->{$this->getRememberTokenName()} = $value;
     }
 
     /**
@@ -61,6 +67,6 @@ class BankidUser extends ArrayObject implements AuthenticatableContract
      * @return string
      */
     public function getRememberTokenName(){
-        return parent::getAuthIdentifierName();
+        return $this->rememberTokenName;
     }
 }
