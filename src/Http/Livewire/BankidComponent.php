@@ -12,12 +12,12 @@ class BankidComponent extends Component
     private $bankid;                                                                        // external dependency.
     protected $rules = [ 'personalNumber' => 'required|min:12' ];            // validation rules
     public $message ='';                              // default message
-    public $status = "WAITING";
+    public $status = "bankid::messages.waiting";
     public $personalNumber = "";
     protected $listeners = [ 'personalNumberClick' => 'personalNumberClick' ];   // event for clicking input
     public $orderRef = "";
     public $hintCode = "";
-
+    public $statusClass ="bg-green-600";
     /**
      * Initialize bankid here so we crash early if something missconfigured. (maybe not good for unit test @todo refactor)
      *
@@ -27,8 +27,8 @@ class BankidComponent extends Component
     {
         $this->bankid = new Bankid();
         $this->bankid->check_configuration();
-        $this->message = __('bankid.EnterPersonalnumber');
-        $this->personalNumber = __('bankid.defaultPersonalnumber');
+        $this->message = __('bankid::messages.EnterPersonalnumber');
+        $this->personalNumber = __('bankid::messages.defaultPersonalnumber');
         parent::__construct($id = null);
     }
 
@@ -39,7 +39,7 @@ class BankidComponent extends Component
      */
     public function personalNumberClick()
     {
-        if ($this->personalNumber === __('bankid.defaultPersonalnumber')) {
+        if ($this->personalNumber === __('bankid::messages.defaultPersonalnumber')) {
             $this->personalNumber = "";
         }
     }
@@ -54,14 +54,19 @@ class BankidComponent extends Component
         if (in_array($this->status, ['collect', 'pending', 'outstandingTransaction']) &&
             in_array($this->status, ['failed', 'error', 'alreadyInProgress']) === false)
         {
+            $this->statusClass ="bg-gray-600";
             $result = $this->bankid->collect(['orderRef' => $this->orderRef]);
 
             $this->updateState($result);
+            $this->message = (strpos(__( 'bankid::messages.' . $this->message), "RFA") !== false) ?
+                __( __('bankid::messages.' . $this->message) . $this->message) :
+                __('bankid::messages.' .$this->message);
             if ($result['status'] == 'complete') {
-                $this->message .= "<script>setTimeout(function(){window.location='/bankid/complete'},2000);</script>";
+                redirect()->to(config('bankid.completeUrl'));
                 $this->status = "complete";
             }
         } else {
+            $this->statusClass ="bg-red-600";
             $this->status = 'failed';
             unset($this->orderRef);
         }
@@ -78,7 +83,6 @@ class BankidComponent extends Component
         foreach ($result as $key => $val) {
             $key = trim($key);
             $this->$key = trim($val);
-            Log::error("setting $key to $val");
         }
     }
 

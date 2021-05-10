@@ -7,29 +7,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
-use \Barryvdh\Debugbar\Facade;
-use \Composer\InstalledVersions;
-use Patrikgrinsvall\LaravelBankid\Http\Controllers\BankidController;
+use BankidUser;
+#use \Composer\InstalledVersions;
 class Bankid
 {
-    const BANKID_CODES = [
-        "INVALID_PARAMETERS" => "INVALID_PARAMETERS",
-        "ALREADY_IN_PROGRESS" => "ALREADY_IN_PROGRESS",
-        "INTERNAL_ERROR" => "INTERNAL_ERROR",
-        "OUTSTANDING_TRANSACTION" => "OUTSTANDING_TRANSACTION",
-        "NO_CLIENT" => "NO_CLIENT",
-        "STARTED" => "STARTED",
-        "USER_SIGN" => "USER_SIGN",
-        "COMPLETE" => "COMPLETE",
-        "USER_CANCEL" => "USER_CANCEL",
-        "CANCEL" => "CANCELLED",
-        "EXPIRED_TRANSACTION" => "EXPIRED_TRANSACTION",
-    ];
-
-    const ERROR_RESPONSE_CODES = [500, 501, 400, 401, 403];
-    const SUCCESS_RESPONSE_CODES = [200, 201];
-
     public function check_configuration()
     {
         $this->debugbar = false;
@@ -57,16 +38,21 @@ class Bankid
 
     private $debugbar = null;
 
+    /**
+     * Log function
+     *
+     * @param [type] $message
+     * @param string $level
+     * @return void
+     */
     function log($message, $level = "error") {
-        if($this->debugbar == true){
+        if(config("app.debug") != true) return;
+        if($this->debugbar == true ) {
             if(is_string($message) === false) {
-                \Debugbar::addMessage("message is not string". print_r($message,1), "info");
                 $message = print_r($message,1);
-                Log::log($level, $message);
-            } else {
-                \Debugbar::addMessage($message, "info");
-                Log::log($level, $message);
             }
+            \Debugbar::addMessage($message, "info");
+            Log::log($level, $message);
         } else {
             Log::log($level, $message);
         }
@@ -77,40 +63,22 @@ class Bankid
      */
     public function Collect(array $request)
     {
-        $function = "/collect";
-        $type = isset($request['type']) ? $request['type'] : "auth";
-
         if ($request['orderRef'] === null) {
-            return ['status' => 'error', 'message' => __('bankid.RFA22')];
+            return ['status' => 'error', 'message' => __('bankid::message.RFA22')];
         }
-        $postdata = [
+
+        $response = $this->bankIdRequest("/collect", [
             "orderRef" => $request['orderRef'],
-        ];
-        $response = $this->bankIdRequest("/collect", $postdata);
+        ]);
 
         if($response['status'] === 'complete') {
-            /*$user = config('bankid.userModel');
-            $user = new $user();*/
             $response['loggedin'] = 'true';
-            session($response);
+            $user = new BankidUser($response['user']);
+            Auth::login($user, true);
             return $response;
-//            redirect()->route('bankid.complete');
         }
 
         return $response;
-    }
-
-    public function saveTransaction()
-    {
-        /*
-                        $transaction = new Transaction([
-                            'user_personal_number' => $response['completionData']['user']['personalNumber'],
-                            'deal_id' => null,
-                            'type' => 'bankid_' . $type,
-                            'statement' => $response['orderRef']]
-                        );
-                        $transaction->save();
-                        */
     }
 
     /**
@@ -118,11 +86,9 @@ class Bankid
      */
     public function Authenticate($personalNumber, $endUserIp = null)
     {
-        if (empty($endUserIp) && array_key_exists('HTTP_X_FORWARDED_FOR', $_SERVER)) {
+        if (empty($endUserIp) && array_key_exists('HTTP_X_FORWARDED_FOR', $_SERVER))
             $endUserIp = $_SERVER["HTTP_X_FORWARDED_FOR"];
-        } else {
-            $endUserIp = $_SERVER['REMOTE_ADDR'];
-        }
+         else $endUserIp = $_SERVER['REMOTE_ADDR'];
 
         $validation = Validator::make([
             'pnr' => $personalNumber,
@@ -135,9 +101,8 @@ class Bankid
             'need ip',
         ]);
 
-        if (empty($endUserIp)) {
-            throw new \Exception('Could not get end user ip which is required');
-        }
+        if (empty($endUserIp)) throw new \Exception('Could not get end user ip which is required');
+
 
         $postdata = [
             'personalNumber' => $personalNumber,
@@ -169,23 +134,23 @@ class Bankid
         $response = $response->json();
         $this->log(print_r($response,1));
         if(isset($response['status']) && $response['status'] == "complete") {
-            $newResponse = array_merge($response['completionData']['user'],
-                                    $response['completionData']['device']);
-        $newResponse['signature']= $response['completionData']['signature'];
-        $newResponse['orderRef']= $response['orderRef'];
-        $newResponse['status']= $response['status'];
+            $newResponse                = array_merge($response['completionData']['user'],
+                                            $response['completionData']['device']);
+            $newResponse['signature']   = $response['completionData']['signature'];
+            $newResponse['orderRef']    = $response['orderRef'];
+            $newResponse['status']      = $response['status'];
         return $newResponse;
         }
         if(isset($response['orderRef']) && !isset($response['status'])) {
             $response['status'] = 'collect';
         }
         if(isset($response['errorCode'])) {
-            $response['message'] = __($response['details']);
+            $response['message'] = __("bankid::messages." . $response['details']);
             $response['status'] = $response['errorCode'];
         }
 
         if(isset($response['hintCode'])) {
-            $response['message'] = __('bankid.'.$response['hintCode']);
+            $response['message'] = __("bankid::messages." . $response['hintCode']);
         }
         return $response;
     }
@@ -239,7 +204,8 @@ class Bankid
         if (! isset($response['orderRef'])) {
             return response()->json(['status' => 'error','message' => 'Did not get orderref, check server logs'], self::ERROR_RESPONSE_CODES[0]);
         }
-        Log::debug("reposne" . $response['orderRef']);
+
+        Log::debug("response" . $response['orderRef']);
 
         return [
             'orderRef' => $response['orderRef'],

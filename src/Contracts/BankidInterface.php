@@ -2,7 +2,7 @@
 
 namespace Patrikgrinsvall\LaravelBankid\Contracts;
 class BankidInterface {
-    */
+
     public function create($collection, Array $document);
 
     /**

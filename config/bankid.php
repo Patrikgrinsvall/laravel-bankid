@@ -7,4 +7,5 @@ return [
     'SSL_KEY_PASSWORD' => env("BANKID_SSL_KEY_PASSWORD", "qwerty123"),
     'completeUrl' =>  env('BANKID_COMPLETE_URL','/member/index'),
     'cancelUrl' => env('BANKID_CANCEL_URL','/'),
+    'SETUP_COMPLETE' => false
 ];

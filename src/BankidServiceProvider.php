@@ -1,8 +1,8 @@
 <?php
 
 namespace Patrikgrinsvall\LaravelBankid;
-
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\View;
 use Livewire\Livewire;
 use Patrikgrinsvall\LaravelBankid\Commands\BankidCommand;
 use Patrikgrinsvall\LaravelBankid\Http\Controllers\BankidController;
@@ -22,64 +22,46 @@ class BankidServiceProvider extends PackageServiceProvider
             ->name('laravel-bankid')
             ->hasConfigFile()
             ->hasViews(true)
-            //->hasMigration('create_laravel_bankid_table')
             ->hasAssets(true)
             ->hasTranslations(true);
-            //->hasCommand(BankidCommand::class);
         $this->app->bind('Bankid', Bankid::class,true);
+        $this->app->bind('BankidUser', BankidUser::class,true);
     }
 
     public function boot()
     {
-        /*
-        $this->publishes([
-            $this->package->basePath('/../Components') => base_path("app/View/Components/vendor/{$this->package->shortName()}"),
-        ], "{$this->package->name}-components");
-        */
-        //parent::boot();
-
-        $this->loadViewsFrom(__DIR__ . '/../resources/views/', 'LaravelBankid');
-        if (! $this->app->runningInConsole()) {
-            Livewire::component('bankidcomponent', Http\Livewire\BankidComponent::class);
-        }
-
-        $this->publishes([
-            $this->package->basePath("/../assets/images") => public_path('vendor/bankid'),
-        ],  $this->package->shortName());
-
-        $this->publishes([
-            $this->package->basePath("/../resources/lang/") => base_path('resources/lang/'),
-        ],  $this->package->shortName());
-
-        $this->loadTranslationsFrom(
-            $this->package->basePath('/../resources/lang/'),
+        #parent::boot();
+        //$this->app->setLocale("sv");
+        $this->loadViewsFrom(
+            $this->package->basePath('/../resources/views/vendor'),
             $this->package->shortName()
         );
- #$this->loadTranslationsFrom(base_path('resources/lang/vendor/bankid/'),'bankid');
-
-
-        Route::macro('LaravelBankid', function (string $prefix) {
-            Route::prefix($prefix)->group(function () {
-                Route::get('/complete', [BankidController::class,'complete'])->name('bankid.complete');;
-                Route::get('/cancel', [BankidController::class,'cancel']);
-                Route::get('/', [BankidController::class, 'index']);
-            });
-        });
-    }
-
-    /**
-     * Register the guard.
-     *
-     * @param \Illuminate\Contracts\Auth\Factory  $auth
-     * @param array $config
-     * @return RequestGuard
-     */
-    protected function createGuard($auth, $config)
-    {
-        return new RequestGuard(
-            new Guard($auth, config('sanctum.expiration'), $config['provider']),
-            $this->app['request'],
-            $auth->createUserProvider($config['provider'] ?? null)
+        $this->loadTranslationsFrom(
+            $this->package->basePath('/../resources/lang/vendor/bankid'),
+            $this->package->shortName()
         );
+        $this->app->config->push('view.paths', $this->package->basePath('/../resources/views/vendor/bankid'));
+        $this->app->config->push('view.paths', resource_path("views/vendor/{$this->package->shortName()}"));
+
+        if ( $this->app->runningInConsole()) {
+            $this->publishes([
+                $this->package->basePath("/../resources/lang/vendor/") => resource_path("lang/vendor/{$this->package->shortName()}"),
+                $this->package->basePath("/../resources/views/vendor") => resource_path("views/vendor/{$this->package->shortName()}")
+            ]  );
+
+            }
+
+            Route::macro('LaravelBankid', function (string $prefix) {
+                Route::prefix($prefix)->group(function () {
+                    Route::get('/complete', [BankidController::class,'complete'])->name('bankid.complete');;
+                    Route::get('/cancel', [BankidController::class,'cancel']);
+                    Route::view('/', 'index');
+                });
+            });
+            Livewire::component('bankidcomponent', Http\Livewire\BankidComponent::class);
+        /*$this->publishes([
+            $this->package->basePath("/../assets/images") => public_path('vendor/bankid'),
+        ],  $this->package->shortName());*/
+
     }
 }
