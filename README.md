@@ -1,6 +1,6 @@
 # WIP! Still a few bugs.
 
-## Laravel 8, with livewire Swedish BankID 
+## Swedish BankID for Laravel 8 with Livewire 
 You will need laravel 8 to use route facade but it might work with earlier versions when using middleware. Livewire is a required dependency so it will be installed.
 
 
