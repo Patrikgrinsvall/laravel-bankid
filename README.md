@@ -34,34 +34,53 @@ return [
 ## Usage
 - Service provider should be auto discovered since larvel 8 so no need to register service provider. 
 - If above doesnt work, register service provider `Patrikgrinsvall\LaravelBankid\BankidServiceProvider` in `config/app.php`
-- In your routes, define what route prefix to use for bankid authentication, example: 
-  `Route::LaravelBankid('/bankid');` 
-- Or you can use supplied middleware:
-```// Within App\Http\Kernel class...
+- There are a few different ways to use this package. As middleware, by calling the supplied route with prefix or as a facade:
+1. As a middleware, first register in App\Http\Kernel class:
+```
 protected $routeMiddleware = [
-    '`bankid' => \Patrikgrinsvall\LaravelBankid\BankidMiddleware::class,
-
+    'bankid' => \Patrikgrinsvall\LaravelBankid\BankidMiddleware::class,
+```
+1.1  Then use in one of the following ways:
+```
 // On a single route
 Route::get('/profile', function () {
+// your stuff
 })->middleware('bankid');
+
+// On a group of routes
+Route::middleware([BankidMiddleware::class])->group(function () {
+    Route::get('/your-route', View::render('your-route'))
+});
 
 // On a group of routes without adding to kernel
 Route::middleware([\Patrikgrinsvall\LaravelBankid\BankidMiddleware::class])->group(function () {
     Route::get('/your-route', View::render('your-route'))
 });
-
-// Or as a facade
+```
+2. As a facade
+```
 use Patrikgrinsvall\LaravelBankid\BankidFacade;
 ...
 Bankid::login(); // will redirect user and start a login. After login user is returned to url in config/bankid.php
 Bankid::user(); // returns the user previously logged in
-
+```
+3. Use the supplied Route facade:
+```
+Route::LaravelBankid('/bankid'); // you can change the route prefix '/bankid' to whatever you want.
+```
+Then you can get the logged in user in one of the following ways;
+```
 // Get the user from the session
 use Illuminate\Support\Facades\Session;
 ...
 Session::get('user'); // another way to get the logged in user.
 ```
-
+From facade:
+```
+use Patrikgrinsvall\LaravelBankid\BankidFacade;
+...
+Bankid::user();
+``` 
 
 ## Testing
 
