@@ -1,23 +1,6 @@
 # WIP! This is not in a usable state yet! Wait a week or two more.
 
 ## Laravel Swedish BankID 
- This package enabless seamless integration with Swedish Bankid using laravel 8.
- - Unit testing 👌
- - Test certificates 👌
- - Auto discovery 👌
- - Custom views 👌
- - Own production certificates 👌
- 
- The only flow that is implemented for now is to authenticate on a mobile phone (other device) using a Swedish personal number.
- 
-
-To do list:
-- [x]  Make a working laravel package
-- [ ]  Migrate code from old package
-- [ ]  Write authentication guard
-- [ ]  Support QR
-- [ ]  Rewrite tests
-- [ ]  Publish to packagist
 
 ## Testing
 For windows run `./vendor/bin/testbench package:test`
@@ -31,7 +14,7 @@ For windows run `./vendor/bin/testbench package:test`
 composer require patrikgrinsvall/laravel_bankid
 ```
 
-Publish the config file with:
+Publish the config, translations and views with:
 ```bash
 php artisan vendor:publish --provider="Patrikgrinsvall\LaravelBankid\LaravelBankidServiceProvider" --tag="laravel_bankid-config"
 ```
@@ -49,20 +32,36 @@ return [
 ```
 
 ## Usage
-- Composer install
-- All dependencies should be auto discovered since larvel 8 so no need to register service provider. 
+- Service provider should be auto discovered since larvel 8 so no need to register service provider. 
 - If above doesnt work, register service provider `Patrikgrinsvall\LaravelBankid\BankidServiceProvider` in `config/app.php`
 - In your routes, define what route prefix to use for bankid authentication, example: 
   `Route::LaravelBankid('/bankid');` 
-- To test it works, browse to your local environment and to the prefix choosen above.
-- Start a bankid authentication you can either use facade: ```
+- Or you can use supplied middleware:
+```// Within App\Http\Kernel class...
+protected $routeMiddleware = [
+    '`bankid' => \Patrikgrinsvall\LaravelBankid\BankidMiddleware::class,
+
+// On a single route
+Route::get('/profile', function () {
+})->middleware('bankid');
+
+// On a group of routes without adding to kernel
+Route::middleware([\Patrikgrinsvall\LaravelBankid\BankidMiddleware::class])->group(function () {
+    Route::get('/your-route', View::render('your-route'))
+});
+
+// Or as a facade
 use Patrikgrinsvall\LaravelBankid\BankidFacade;
 ...
+Bankid::login(); // will redirect user and start a login. After login user is returned to url in config/bankid.php
+Bankid::user(); // returns the user previously logged in
 
-Bankid::login(); // <-- will redirect user to login flow and ask for pnr etc.
+// Get the user from the session
+use Illuminate\Support\Facades\Session;
+...
+Session::get('user'); // another way to get the logged in user.
 ```
-- After bankid authentication is completed you can get the bankid details like `Bankid::user()`
-- 
+
 
 ## Testing
 
