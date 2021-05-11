@@ -1,33 +1,38 @@
-# WIP! This is not in a usable state yet! Wait a week or two more.
+# WIP! Still a few bugs.
 
-## Laravel Swedish BankID 
-
-## Testing
-For windows run `./vendor/bin/testbench package:test`
+## Laravel 8, with livewire Swedish BankID 
+You will need laravel 8 to use route facade but it might work with earlier versions when using middleware. Livewire is a required dependency so it will be installed.
 
 
 ## Installation
 
-~~You can install the package via composer:
-
+Composer:
 ```bash
 composer require patrikgrinsvall/laravel_bankid
 ```
 
 Publish the config, translations and views with:
-```bash
-php artisan vendor:publish --provider="Patrikgrinsvall\LaravelBankid\LaravelBankidServiceProvider" --tag="laravel_bankid-config"
 ```
+php artisan vendor:publish --provider="Patrikgrinsvall\LaravelBankid\LaravelBankidServiceProvider"
+```
+Or to select from vendor list.
+```
+php artisan vendor:publish
+```
+After publishing you will be able to add your production certificates, edit views and translations.
 
-This is the contents of the published config file:
+This is the contents of the published config file, defaults to test certificates:
 
 ```php
 return [
-    "BANKID_ENDPOINT"           => "https://appapi2.bankid.com/rp/v5.1",
-    "BANKID_SSL_CERT"           => "storage/certs/bankidprod/customername.crt.pem"
-    "BANKID_CA_CERT"            => storage/certs/bankidprod/cacert.pem
-    "BANKID_SSL_KEY"            => storage/certs/bankidprod/private.key.pem
-    "BANKID_SSL_KEY_PASSWORD"   => xxxx
+    'SSL_CERT' => env('BANKID_SSL_CERT', base_path("storage/certs/bankidtest/bankidtest.crt.pem")),
+    'CA_CERT' => env('BANKID_CA_CERT', base_path("storage/certs/cacert-2020-01-01.pem")),
+    'ENDPOINT' => env('BANKID_ENDPOINT', "https://appapi2.test.bankid.com/rp/v5.1"),
+    'SSL_KEY' => env("BANKID_SSL_KEY", base_path("storage/certs/bankidtest/bankidtest.key.pem")),
+    'SSL_KEY_PASSWORD' => env("BANKID_SSL_KEY_PASSWORD", "qwerty123"),
+    'completeUrl' =>  env('BANKID_COMPLETE_URL','/member/index'), // change to the url to redirect user to after completed login
+    'cancelUrl' => env('BANKID_CANCEL_URL','/'), // change to the url to redirect user to if he press cancel.
+    'SETUP_COMPLETE' => false // shows install instructions
 ];
 ```
 
