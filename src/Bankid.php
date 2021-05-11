@@ -59,12 +59,37 @@ class Bankid
         }
     }
 
-    public function loggedin(){
-        if(Session::has('user')){
-            Session::get('user');
+    public static function loggedin(){
+        if(Session::has('personalNumber')){
+            return true;
         } else {
             return false;
         }
+    }
+
+    public static function User() {
+        if(Session::has('personalNumber')){
+            return [
+                'personalNumber'    => Session::get('personalNumber'),
+                'name'              => Session::get('name'),
+                'givenName'         => Session::get('givenName'),
+                'surname'           => Session::get('surname'),
+                'signature'         => Session::get('signature')
+            ];
+        } else {
+            return false;
+        }
+    }
+    public function storeUser($response) {
+        $newResponse['status']          = $response['status'];
+        $newResponse['user']            = $response['completionData']['user'];
+        $newResponse['device']          = $response['completionData']['device'];
+        $newResponse['signature']       = $response['completionData']['signature'];
+        Session::put('personalNumber',  $response['completionData']['user']['personalNumber']);
+        Session::put('name',            $response['completionData']['user']['name']);
+        Session::put('givenName',       $response['completionData']['user']['givenName']);
+        Session::put('surname',         $response['completionData']['user']['surname']);
+        Session::put('signature',       $response['completionData']['signature']);
     }
 
     /**
@@ -82,11 +107,6 @@ class Bankid
 
         if($response['status'] === 'complete') {
             $response['loggedin'] = 'true';
-            $user = new BankidUser($response['user']);
-            $this->log($user);
-            Session::put('user', $response['user']); // this should be done with real authsystem, one day
-            Session::save();
-            //Auth::login($user, true);
             return $response;
         }
 
@@ -146,11 +166,8 @@ class Bankid
         $response = $response->json();
         $this->log(print_r($response,1));
         if(isset($response['status']) && $response['status'] == "complete") {
-            $newResponse['user']        = $response['completionData']['user'];
-            $newResponse['device']      = $response['completionData']['device'];
-            $newResponse['signature']   = $response['completionData']['signature'];
-            $newResponse['orderRef']    = $response['orderRef'];
-            $newResponse['status']      = $response['status'];
+
+            $newResponse = $this->storeUser($response);
             return $newResponse;
         }
         if(isset($response['orderRef']) && !isset($response['status'])) {

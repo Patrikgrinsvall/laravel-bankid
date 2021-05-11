@@ -3,19 +3,17 @@ namespace Patrikgrinsvall\LaravelBankid;
 
 use Closure;
 use Illuminate\Http\Request;
-//use Illuminate\Support\Facades\Session;
-
+use Patrikgrinsvall\LaravelBankid\BankidFacade;
 class BankidMiddleware {
     public function handle(Request $request, Closure $next)
     {
-        if(!$request->session->isStarted()) {
-            $request->session->start();
-        }
-        if($request->session->has('user') && $user = $request->session->get('user')) {
+
+        if($user = bankid::getUser()) {
             if(isset($user['personal_number'])) {
                 return $next($request);
             }
+        } else {
+            return redirect(config('bankid.prefix') . "/login");
         }
-
     }
 }

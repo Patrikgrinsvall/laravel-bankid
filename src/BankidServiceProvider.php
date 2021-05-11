@@ -24,14 +24,14 @@ class BankidServiceProvider extends PackageServiceProvider
             ->hasViews(true)
             ->hasAssets(true)
             ->hasTranslations(true);
-        $this->app->bind('Bankid', Bankid::class,true);
-        $this->app->bind('BankidUser', BankidUser::class,true);
+        $this->app->bind('bankid', Bankid::class,true);
     }
 
     public function boot()
     {
-        #parent::boot();
+        parent::boot();
         //$this->app->setLocale("sv");
+
         $this->loadViewsFrom(
             $this->package->basePath('/../resources/views/vendor'),
             $this->package->shortName()
@@ -48,8 +48,8 @@ class BankidServiceProvider extends PackageServiceProvider
                 $this->package->basePath("/../resources/lang/vendor/") => resource_path("lang/vendor/{$this->package->shortName()}"),
                 $this->package->basePath("/../resources/views/vendor") => resource_path("views/vendor/{$this->package->shortName()}")
             ]  );
+        }
 
-            }
 
             Route::macro('LaravelBankid', function (string $prefix) {
                 Route::prefix($prefix)->group(function () {
@@ -58,6 +58,7 @@ class BankidServiceProvider extends PackageServiceProvider
                     Route::view('/', 'index');
                 });
             });
+
             Livewire::component('bankidcomponent', Http\Livewire\BankidComponent::class);
         /*$this->publishes([
             $this->package->basePath("/../assets/images") => public_path('vendor/bankid'),
