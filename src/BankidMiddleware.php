@@ -8,7 +8,7 @@ class BankidMiddleware {
     public function handle(Request $request, Closure $next)
     {
 
-        if($user = bankid::getUser()) {
+        if($user = Bankid::user()) {
             if(isset($user['personal_number'])) {
                 return $next($request);
             }
