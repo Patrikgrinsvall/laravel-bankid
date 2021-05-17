@@ -81,15 +81,19 @@ class Bankid
         }
     }
     public function storeUser($response) {
+        $newResponse = [];
         $newResponse['status']          = $response['status'];
         $newResponse['user']            = $response['completionData']['user'];
         $newResponse['device']          = $response['completionData']['device'];
         $newResponse['signature']       = $response['completionData']['signature'];
-        Session::put('personalNumber',  $response['completionData']['user']['personalNumber']);
-        Session::put('name',            $response['completionData']['user']['name']);
-        Session::put('givenName',       $response['completionData']['user']['givenName']);
-        Session::put('surname',         $response['completionData']['user']['surname']);
-        Session::put('signature',       $response['completionData']['signature']);
+
+        Session::put('bankid.user',            $newResponse['user']);
+        Session::put('bankid.personalNumber',  $response['completionData']['user']['personalNumber']);
+        Session::put('bankid.name',            $response['completionData']['user']['name']);
+        Session::put('bankid.givenName',       $response['completionData']['user']['givenName']);
+        Session::put('bankid.surname',         $response['completionData']['user']['surname']);
+        Session::put('bankid.signature',       $response['completionData']['signature']);
+        return $newResponse;
     }
 
     /**
@@ -141,7 +145,7 @@ class Bankid
             'endUserIp' => $endUserIp,
         ];
 
-        $response = $this->bankIdRequest("auth", $postdata);
+        $response = $this->bankIdRequest("/auth", $postdata);
         return $response;
     }
 

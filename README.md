@@ -10,42 +10,39 @@ Composer:
 ```bash
 composer require patrikgrinsvall/laravel_bankid
 ```
-
-Publish the config, translations and views with:
+- Publish the config, views and transaltions with
 ```
 php artisan vendor:publish --provider="Patrikgrinsvall\LaravelBankid\LaravelBankidServiceProvider"
 ```
-Or to select from vendor list.
-```
-php artisan vendor:publish
-```
-After publishing you will be able to add your production certificates, edit views and translations.
-
-This is the contents of the published config file, defaults to test certificates:
-
-```php
-return [
-    'SSL_CERT' => env('BANKID_SSL_CERT', base_path("storage/certs/bankidtest/bankidtest.crt.pem")),
-    'CA_CERT' => env('BANKID_CA_CERT', base_path("storage/certs/cacert-2020-01-01.pem")),
-    'ENDPOINT' => env('BANKID_ENDPOINT', "https://appapi2.test.bankid.com/rp/v5.1"),
-    'SSL_KEY' => env("BANKID_SSL_KEY", base_path("storage/certs/bankidtest/bankidtest.key.pem")),
-    'SSL_KEY_PASSWORD' => env("BANKID_SSL_KEY_PASSWORD", "qwerty123"),
-    'completeUrl' =>  env('BANKID_COMPLETE_URL','/member/index'), // change to the url to redirect user to after completed login
-    'cancelUrl' => env('BANKID_CANCEL_URL','/'), // change to the url to redirect user to if he press cancel.
-    'SETUP_COMPLETE' => false // shows install instructions
-];
-```
-
+- Then check in `app/config/bankid.php` for info on how to add your own certificates.
 ## Usage
 - Service provider should be auto discovered since larvel 8 so no need to register service provider. 
-- If above doesnt work, register service provider `Patrikgrinsvall\LaravelBankid\BankidServiceProvider` in `config/app.php`
-- There are a few different ways to use this package. As middleware, by calling the supplied route with prefix or as a facade:
-1. As a middleware, first register in App\Http\Kernel class:
+- However i have noticed in many cases this does not work so usually:
+- Register service provider `Patrikgrinsvall\LaravelBankid\BankidServiceProvider` in `config/app.php`
+
+**There are a few different ways to use this package**
+1. Use the supplied Route macro:
+```
+// You can change the route prefix '/bankid' to whatever you want, for example /login.
+// This is then the entrypoint for where users should be sent to start authentication.
+// This line of code should be placed in routes.
+Route::LaravelBankid('/bankid'); 
+```
+
+2. As a facade (this might work, dont remember.)
+```
+use Patrikgrinsvall\LaravelBankid\BankidFacade;
+...
+Bankid::login(); // will redirect user and start a login. After login user is returned to url in config/bankid.php
+Bankid::user(); // returns the user previously logged in or false.
+```
+
+3. As a middleware, first register in App\Http\Kernel class: (WIP! Dont use yet!) 
 ```
 protected $routeMiddleware = [
     'bankid' => \Patrikgrinsvall\LaravelBankid\BankidMiddleware::class,
 ```
-1.1  Then use in one of the following ways:
+ Then use in one of the following ways:
 ```
 // On a single route
 Route::get('/profile', function () {
@@ -62,23 +59,19 @@ Route::middleware([\Patrikgrinsvall\LaravelBankid\BankidMiddleware::class])->gro
     Route::get('/your-route', View::render('your-route'))
 });
 ```
-2. As a facade
-```
-use Patrikgrinsvall\LaravelBankid\BankidFacade;
-...
-Bankid::login(); // will redirect user and start a login. After login user is returned to url in config/bankid.php
-Bankid::user(); // returns the user previously logged in
-```
-3. Use the supplied Route facade:
-```
-Route::LaravelBankid('/bankid'); // you can change the route prefix '/bankid' to whatever you want.
-```
-Then you can get the logged in user in one of the following ways;
+
+## Retrieve authenticated user.
+
 ```
 // Get the user from the session
 use Illuminate\Support\Facades\Session;
 ...
-Session::get('user'); // another way to get the logged in user.
+Session::get('bankid.user');            // returns user details as an array
+Session::get('bankid.personalNumber');  // returns personal number as a string
+Session::get('bankid.name');            // returns full name as a string
+Session::get('bankid.givenName');       // returns first name as a string
+Session::get('bankid.surname');         // returns lastn name as string
+Session::get('bankid.signature');       // returns signature as string.
 ```
 From facade:
 ```
@@ -93,23 +86,15 @@ Bankid::user();
 composer test
 ```
 
-## Changelog
+## Final notes. 
+-  Basic authentication works
+-  But alot in this package is not finished i will continue to iterate over it when need arises.
+-  PRs are welcome!
+-  Sign is not working.
+-  QR is not working.
 
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
+While this package is free to use, you can hire help of integrating it, contact info@silentridge.io
 
-## Contributing
 
-Please see [CONTRIBUTING](.github/CONTRIBUTING.md) for details.
-
-## Security Vulnerabilities
-
-Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
-
-## Credits
-
-- [Patrik Grinsvall](https://github.com/patrikgrinsvall)
-- [All Contributors](../../contributors)
-
-## License
 
 The MIT License (MIT). Please see [License File](LICENSE.md) for more information.

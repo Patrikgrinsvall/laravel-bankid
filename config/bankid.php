@@ -25,5 +25,9 @@ return [
     'cancelUrl'         =>  env('BANKID_CANCEL_URL',        '/'),
 
     // Show setup instructions
-    'SETUP_COMPLETE'    =>  false
+    'SETUP_COMPLETE'    =>  true,
+
+    // If you dont want to go through the process of logging in each time when developing,
+    // Adding personal number here will make this always logged in.
+    "personalNumber"    => "197410092527"
 ];

@@ -6,6 +6,11 @@ use Illuminate\Routing\Controller;
 
 class BankidController extends Controller
 {
+
+    public function index() {
+        return view('index');
+    }
+
     public function complete()
     {
         if (config("bankid.completeUrl") && ! empty(config("bankid.completeUrl"))) {
