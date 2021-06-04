@@ -1,7 +1,11 @@
-# WIP! Still a few bugs.
+
+While this package is free to use, you can hire help of integrating it, contact info@silentridge.io
+
 
 ## Swedish BankID for Laravel 8 with Livewire 
-You will need laravel 8 to use route facade but it might work with earlier versions when using middleware. Livewire is a required dependency so it will be installed.
+You will need laravel 8 to use route facade but it might work with earlier versions when using middleware. Livewire is a required dependency so it will be installed. I think however its possible to quite easy call the service from another controller action and it will work quite well.
+
+Anyway, there are a plenthora of improvements to be made to this project but it is used in production for atleast one company. PRs are very welcome.
 
 
 ## Installation
@@ -15,6 +19,9 @@ composer require patrikgrinsvall/laravel_bankid
 php artisan vendor:publish --provider="Patrikgrinsvall\LaravelBankid\LaravelBankidServiceProvider"
 ```
 - Then check in `app/config/bankid.php` for info on how to add your own certificates.
+- Views will be editable in your views directory
+- Translations will be editable in defauit translations directory. Swedish and English are provided with package.
+- 
 ## Usage
 - Service provider should be auto discovered since larvel 8 so no need to register service provider. 
 - However i have noticed in many cases this does not work so usually:
@@ -87,13 +94,14 @@ composer test
 ```
 
 ## Final notes. 
--  Basic authentication works
+-  Basic authentication works for mobile devices.
 -  But alot in this package is not finished i will continue to iterate over it when need arises.
 -  PRs are welcome!
 -  Sign is not working.
 -  QR is not working.
+-  Same device is not working (bankid on fil)
 
-While this package is free to use, you can hire help of integrating it, contact info@silentridge.io
+
 
 
 
