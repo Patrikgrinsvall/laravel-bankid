@@ -60,7 +60,7 @@ class Bankid
     }
 
     public static function loggedin(){
-        if(Session::has('personalNumber')){
+        if(Session::has('bankid.personalNumber')){
             return true;
         } else {
             return false;
@@ -68,13 +68,13 @@ class Bankid
     }
 
     public static function User() {
-        if(Session::has('personalNumber')){
+        if(Session::has('bankid.personalNumber')){
             return [
-                'personalNumber'    => Session::get('personalNumber'),
-                'name'              => Session::get('name'),
-                'givenName'         => Session::get('givenName'),
-                'surname'           => Session::get('surname'),
-                'signature'         => Session::get('signature')
+                'personalNumber'    => Session::get('bankid.personalNumber'),
+                'name'              => Session::get('bankid.name'),
+                'givenName'         => Session::get('bankid.givenName'),
+                'surname'           => Session::get('bankid.surname'),
+                'signature'         => Session::get('bankid.signature') ?? null
             ];
         } else {
             return false;

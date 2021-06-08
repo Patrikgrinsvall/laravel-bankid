@@ -7,8 +7,7 @@
         "bank id",
         "swedish bankid",
         "svenskt bankid",
-        "fiansiell id teknik",
-        "patrikgrinsvall"
+        "fiansiell id teknik"
     ],
     "homepage": "https://github.com/patrikgrinsvall/laravel-bankid",
     "license": "MIT",
@@ -20,7 +19,7 @@
         }
     ],
     "require": {
-        "php": "^8.0",
+        "php": "^7.4 | ^8.0",
         "illuminate/contracts": "^8.0",
         "livewire/livewire": "^2.4",
         "spatie/laravel-package-tools": "^1.4.3"
