@@ -12,7 +12,7 @@ Anyway, there are a plenthora of improvements to be made to this project but it 
 
 Composer:
 ```bash
-composer require patrikgrinsvall/laravel_bankid
+composer require patrikgrinsvall/laravel-bankid
 ```
 - Publish the config, views and transaltions with
 ```
