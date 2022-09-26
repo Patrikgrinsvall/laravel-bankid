@@ -4,7 +4,7 @@ namespace Patrikgrinsvall\LaravelBankid\Tests;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
-use Patrikgrinsvall\LaravelBankid\BankidServiceProvider;
+use Patrikgrinsvall\LaravelBankid\BankidLivewireServiceProvider;
 
 class TestCase extends Orchestra
 {
@@ -20,7 +20,7 @@ class TestCase extends Orchestra
     protected function getPackageProviders($app)
     {
         return [
-            BankidServiceProvider::class,
+            BankidLivewireServiceProvider::class,
         ];
     }
 
